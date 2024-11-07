@@ -1,0 +1,15 @@
+{
+    "en": {
+      "hero-title": "Chemify: Unlock Your Chemistry Potential",
+      "hero-description": "Explore chemistry concepts interactively and master your Abitur with engaging courses and quizzes.",
+      "nav-links-home": "Home",
+      "nav-links-courses": "Courses"
+    },
+    "de": {
+      "hero-title": "Chemify: Entfessele dein Chemie-Potenzial",
+      "hero-description": "Erkunde Chemie interaktiv und meistere dein Abitur mit spannenden Kursen und Quizfragen.",
+      "nav-links-home": "Start",
+      "nav-links-courses": "Kurse"
+    }
+  }
+  

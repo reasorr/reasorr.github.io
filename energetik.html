@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energetik - All Levels</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap">
+    <style>
+        /* General Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #f9f9f9;
+            font-family: 'Open Sans', Arial, sans-serif;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            padding-top: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 90%;
+        }
+
+        .lesson-content {
+            padding: 50px 20px;
+            background-color: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 40px auto;
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transform: scaleY(0);
+            transform-origin: top;
+            transition: max-height 0.5s ease, opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .lesson-content.visible {
+            max-height: 2000px; /* Allow more space for expanded content */
+            opacity: 1;
+            transform: scaleY(1);
+        }
+
+        h1, h2 {
+            color: #333;
+        }
+
+        p {
+            color: #555;
+            margin-top: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background-color: #39b54a;
+            border-radius: 5px;
+        }
+
+        .quiz {
+            margin-top: 40px;
+        }
+
+        .quiz-question {
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .answer-options {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .answer-button {
+            padding: 15px 20px;
+            border: 2px solid #555;
+            background-color: #555;
+            color: #ffffff;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1.2em;
+            text-align: center;
+            transition: background-color 0.3s ease;
+            display: inline-block;
+            max-width: 100%;
+            white-space: normal; /* Allows text wrapping */
+        }
+
+        .answer-button.correct {
+            background-color: #39b54a;
+            border-color: #39b54a;
+            animation: correct-answer 0.4s ease-in;
+        }
+
+        .answer-button.incorrect {
+            background-color: #ff4d4f;
+            border-color: #ff4d4f;
+        }
+
+        .feedback {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .feedback.incorrect {
+            color: #ff4d4f;
+        }
+
+        .feedback.correct {
+            color: #39b54a;
+        }
+
+        @keyframes correct-answer {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .continue-button {
+            padding: 15px 30px;
+            background-color: #39b54a;
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 30px;
+            display: block;
+            width: fit-content;
+            margin-left: auto;
+            transition: background-color 0.3s;
+        }
+
+        .continue-button:hover {
+            background-color: #2e8b47;
+        }
+
+        pre {
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- Level 1 Content -->
+        <section class="lesson-content visible" id="level1">
+            <div class="progress-bar">
+                <div class="progress-bar-fill" style="width: 25%;"></div>
+            </div>
+            <h1>Level 1: Grundlagen der Thermodynamik</h1>
+            <p><b>Thermodynamik</b> ist das Studium von Energie und deren Umwandlungen. Es gibt drei wichtige Größen, die wir kennenlernen: die <b>Enthalpie (ΔH)</b>, die <b>Entropie (ΔS)</b>, und die <b>Gibbs-Energie (ΔG)</b>.</p>
+            <h2>Beispielaufgabe: Reaktionsenthalpie</h2>
+            <p>Stell dir vor, du hast eine Reaktion mit H₂ und O₂ zur Bildung von Wasser (H₂O):</p>
+            <pre>
+H₂ + ½ O₂ → H₂O    ΔH = -285,8 kJ/mol
+            </pre>
+            <p>Wenn du 2 mol Wasserstoff und 1 mol Sauerstoff verwendest, wie viel Energie wird insgesamt freigesetzt?</p>
+            <p><b>Antwort:</b> Die Reaktion bildet 2 mol H₂O, daher wird:</p>
+            <pre>
+2 mol * -285,8 kJ/mol = -571,6 kJ
+            </pre>
+            <p>freigesetzt.</p>
+
+            <!-- Quiz Section -->
+            <div class="quiz">
+                <h2>Quiz</h2>
+                <p class="quiz-question">Ein Prozess hat ΔH = +200 kJ. Welche Aussage ist korrekt?</p>
+                <div class="answer-options">
+                    <button class="answer-button" data-correct="true" onclick="unlockLevel('level2')">Die Reaktion nimmt Wärme auf (endotherm).</button>
+                    <button class="answer-button" data-correct="false">Die Reaktion gibt Wärme ab (exotherm).</button>
+                </div>
+                <p class="feedback" style="display: none;"></p>
+            </div>
+        </section>
+
+        <!-- Level 2 Content -->
+        <section class="lesson-content" id="level2">
+            <div class="progress-bar">
+                <div class="progress-bar-fill" style="width: 50%;"></div>
+            </div>
+            <h1>Level 2: Messmethoden und Kalorimetrie</h1>
+            <h2>Berechnung der Wärmeübertragung</h2>
+            <p>Wenn 150 g Wasser von 20 °C auf 80 °C erhitzt wird, wie viel Energie ist nötig? (c = 4,18 J/g·°C)</p>
+            <pre>
+q = m * c * ΔT = 150 g * 4,18 J/g·°C * (80 - 20) °C = 37620 J
+            </pre>
+            <p>Es werden 37620 J benötigt.</p>
+
+            <!-- Quiz Section -->
+            <div class="quiz">
+                <h2>Quiz</h2>
+                <p class="quiz-question">Du hast ein 200-g-Metallstück (c = 0,9 J/g·°C), das von 25 °C auf 75 °C erhitzt wird. Wie viel Energie wird benötigt?</p>
+                <div class="answer-options">
+                    <button class="answer-button" data-correct="false">450 J</button>
+                    <button class="answer-button" data-correct="false">9000 J</button>
+                    <button class="answer-button" data-correct="true" onclick="unlockLevel('level3')">9000 J</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Level 3 Content -->
+        <section class="lesson-content" id="level3">
+            <div class="progress-bar">
+                <div class="progress-bar-fill" style="width: 75%;"></div>
+            </div>
+            <h1>Level 3: Verbrennungsenthalpie und Standardbildungsenthalpie</h1>
+            <p>Berechne die Wärme, die bei der Verbrennung von 3 mol Methan (CH₄) freigesetzt wird, wenn:</p>
+            <pre>
+CH₄ + 2 O₂ → CO₂ + 2 H₂O    ΔH = -890,3 kJ/mol
+            </pre>
+            <p><b>Antwort:</b> Die Reaktion setzt:</p>
+            <pre>
+3 mol * -890,3 kJ/mol = -2670,9 kJ
+            </pre>
+            <p>frei.</p>
+
+            <!-- Quiz Section -->
+            <div class="quiz">
+                <h2>Quiz</h2>
+                <p class="quiz-question">Wie viel Energie wird bei der Verbrennung von 5 mol CH₄ freigesetzt? (ΔH = -890,3 kJ/mol)</p>
+                <div class="answer-options">
+                    <button class="answer-button" data-correct="false">1780,6 kJ</button>
+                    <button class="answer-button" data-correct="true" onclick="unlockLevel('level4')">-4451,5 kJ</button>
+                    <button class="answer-button" data-correct="false">-1780,6 kJ</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Level 4 Content -->
+        <section class="lesson-content" id="level4">
+            <div class="progress-bar">
+                <div class="progress-bar-fill" style="width: 100%;"></div>
+            </div>
+            <h1>Level 4: Phasenübergänge und Aggregatzustände</h1>
+            <h2>Beispielaufgabe: Verdampfungsenthalpie</h2>
+            <p>Berechne die Energie, um 250 g Wasser (M = 18 g/mol) zu verdampfen, wenn die Verdampfungsenthalpie 40,7 kJ/mol beträgt.</p>
+            <pre>
+n = m / M = 250 g / 18 g/mol = 13,89 mol
+q = n * ΔH = 13,89 mol * 40,7 kJ/mol = 565,2 kJ
+            </pre>
+            <p>Es werden 565,2 kJ benötigt.</p>
+
+            <!-- Quiz Section -->
+            <div class="quiz">
+                <h2>Quiz</h2>
+                <p class="quiz-question">Berechne die Energie, um 150 g Wasser zu verdampfen. (M = 18 g/mol, ΔH = 40,7 kJ/mol)</p>
+                <div class="answer-options">
+                    <button class="answer-button" data-correct="true" onclick="alert('Lesson Complete!')">339,2 kJ</button>
+                    <button class="answer-button" data-correct="false">4070 kJ</button>
+                    <button class="answer-button" data-correct="false">150 kJ</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        function unlockLevel(levelId) {
+            const nextLevel = document.getElementById(levelId);
+            if (nextLevel) {
+                nextLevel.classList.add("visible");
+            }
+        }
+
+        document.querySelectorAll('.answer-button').forEach(button => {
+            button.addEventListener('click', () => {
+                document.querySelectorAll('.answer-button').forEach(btn => btn.classList.remove('correct', 'incorrect'));
+                if (button.dataset.correct === 'true') {
+                    button.classList.add('correct');
+                } else {
+                    button.classList.add('incorrect');
+                }
+            });
+        });
+    </script>
+
+</body>
+
+</html>
