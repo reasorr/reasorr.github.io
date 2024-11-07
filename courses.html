@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Kurse - Chemify</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #f9f9f9;
+            font-family: 'Open Sans', Arial, sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .nav-container {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
+            background-color: #ffffff;
+            box-shadow: 0px 1px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 20px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 700;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #39b54a;
+        }
+
+        .language-selector select {
+            background-color: #ffffff;
+            color: #333;
+            border: 1px solid #ccc;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 100px 20px;
+            background-color: #ffffff;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .hero h1 {
+            font-size: 3.5em;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .hero p {
+            font-size: 1.5em;
+            color: #555;
+            margin: 20px 0;
+        }
+
+        .course-button {
+            padding: 15px 30px;
+            background-color: #39b54a;
+            color: #ffffff;
+            border: none;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-block;
+            transition: background-color 0.3s ease;
+        }
+
+        .course-button:hover {
+            background-color: #2e8b47;
+        }
+
+        .learning-paths {
+            padding: 50px 20px;
+        }
+
+        .course-card {
+            background-color: #ffffff;
+            border-radius: 20px;
+            padding: 40px;
+            margin: 20px;
+            box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .course-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .course-header h2 {
+            color: #000; /* Kursüberschriften auf Schwarz ändern */
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .course-levels {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+        }
+
+        .level-card {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            width: 180px;
+            min-height: 150px;
+            overflow-wrap: break-word;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .level-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .level-title {
+            color: #39b54a;
+            font-weight: bold;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .search-container {
+            position: relative;
+        }
+
+        .search-bar {
+            padding: 10px;
+            border-radius: 25px;
+            border: 1px solid #ccc;
+            width: 300px;
+        }
+
+        .search-button {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #777;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .course-levels {
+                flex-direction: column;
+                align-items: center;
+            }
+            .course-button {
+                position: static;
+                transform: none;
+                margin-top: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigationsleiste -->
+    <nav>
+        <div class="nav-container">
+            <div class="nav-left">
+                <img src="images/Chemify_Logo.png" alt="Chemify Logo" id="site-logo" style="height: 70px; width: auto;" loading="lazy">
+                <ul class="nav-links">
+                    <li><a href="courses.html" id="nav-links-courses"><i class="fas fa-book"></i> Kurse</a></li>
+                    <li><a href="aufgaben.html" id="nav-links-aufgaben"><i class="fas fa-tasks"></i> Aufgaben</a></li>
+                </ul>
+            </div>
+            <div class="nav-right">
+                <div class="language-selector">
+                    <select id="language-dropdown">
+                        <option value="en">🇬🇧 English</option>
+                        <option value="de">🇩🇪 Deutsch</option>
+                    </select>
+                </div>
+                <div class="search-container">
+                    <input type="text" id="search-bar" class="search-bar" placeholder="Suche...">
+                    <button class="search-button"><i class="fas fa-search"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero-Bereich -->
+    <div class="hero">
+        <h1 id="courses-title">Kurse</h1>
+        <p id="courses-subtitle">Schritt-für-Schritt Pfade zur Meisterschaft</p>
+    </div>
+
+    <!-- Kursbereich -->
+    <section class="learning-paths">
+
+        <!-- Organische Chemie -->
+        <div class="course-card">
+            <div class="course-header">
+                <h2 id="organic-chemistry-title">Organische Chemie</h2>
+                <p id="organic-chemistry-description">Meistere die essenziellen Problemlösungsfähigkeiten in der organischen Chemie</p>
+                <button id="continue-button" class="course-button">Fortsetzen</button>
+                <a href="lesson1.html" class="course-button">Fortsetzen</a>
+            </div>
+            <div class="course-levels">
+                <div class="level-card"><p id="level-1" class="level-title">Level 1</p><p>Einführung in die Organische Chemie</p></div>
+                <div class="level-card"><p id="level-2" class="level-title">Level 2</p><p>Kohlenwasserstoffe</p></div>
+                <div class="level-card"><p id="level-3" class="level-title">Level 3</p><p>Funktionelle Gruppen</p></div>
+                <div class="level-card"><p id="level-4" class="level-title">Level 4</p><p>Isomerie</p></div>
+                <div class="level-card"><p id="level-5" class="level-title">Level 5</p><p>Zwischenmolekulare Kräfte</p></div>
+            </div>
+        </div>
+
+        <!-- Energetik Course Section in courses.html -->
+<div class="course-card">
+    <div class="course-header">
+        <h2 id="energetics-title">Energetik</h2>
+        <p id="energetics-description">Verstehe die Energieänderungen bei chemischen Reaktionen</p>
+        <a href="energetik.html" class="course-button">Fortsetzen</a>
+    </div>
+    <div class="course-levels">
+        <div class="level-card"><p id="energetics-level-1" class="level-title">Level 1</p><p>Grundlagen der Thermodynamik</p></div>
+        <div class="level-card"><p id="energetics-level-2" class="level-title">Level 2</p><p>Messung und Kalorimetrie</p></div>
+        <div class="level-card"><p id="energetics-level-3" class="level-title">Level 3</p><p>Verbrennung & Standardenthalpie</p></div>
+        <div class="level-card"><p id="energetics-level-4" class="level-title">Level 4</p><p>Phasenübergänge & Aggregate</p></div>
+    </div>
+</div>
+
+
+        <!-- Redoxreaktionen -->
+        <div class="course-card">
+            <div class="course-header">
+                <h2 id="redox-title">Redoxreaktionen</h2>
+                <p id="redox-description">Lerne Oxidation, Reduktion und Anwendungen</p>
+                <button class="course-button">Fortsetzen</button>
+            </div>
+            <div class="course-levels">
+                <div class="level-card"><p id="redox-level-1" class="level-title">Level 1</p><p>Grundlagen der Oxidation und Reduktion</p></div>
+                <div class="level-card"><p id="redox-level-2" class="level-title">Level 2</p><p>Redoxgleichungen im Detail</p></div>
+                <div class="level-card"><p id="redox-level-3" class="level-title">Level 3</p><p>Galvanische Zellen & Elektrolyse</p></div>
+                <div class="level-card"><p id="redox-level-4" class="level-title">Level 4</p><p>Anwendungen von Redoxreaktionen</p></div>
+            </div>
+        </div>
+
+    </section>
+
+    <script>
+        // Eingebettete Übersetzungsdaten
+        const translationsData = {
+            "en": {
+                "courses_title": "Courses",
+                "courses_subtitle": "Step-by-step paths to mastery",
+                "nav_links_courses": "Courses",
+                "nav_links_aufgaben": "Tasks",
+                "organic_chemistry_title": "Organic Chemistry",
+                "organic_chemistry_description": "Master problem-solving essentials in organic chemistry",
+                "continue_button": "Continue",
+                "energetics_title": "Energetics",
+                "energetics_description": "Understand energy changes in chemical reactions",
+                "redox_title": "Redox Reactions",
+                "redox_description": "Learn oxidation, reduction, and applications"
+            },
+            "de": {
+                "courses_title": "Kurse",
+                "courses_subtitle": "Schritt-für-Schritt Pfade zur Meisterschaft",
+                "nav_links_courses": "Kurse",
+                "nav_links_aufgaben": "Aufgaben",
+                "organic_chemistry_title": "Organische Chemie",
+                "organic_chemistry_description": "Meistere die essenziellen Problemlösungsfähigkeiten in der organischen Chemie",
+                "continue_button": "Fortsetzen",
+                "energetics_title": "Energetik",
+                "energetics_description": "Verstehe die Energieänderungen bei chemischen Reaktionen",
+                "redox_title": "Redoxreaktionen",
+                "redox_description": "Lerne Oxidation, Reduktion und Anwendungen"
+            }
+        };
+
+        function setLanguage(lang) {
+            if (translationsData[lang]) {
+                updateContent(translationsData[lang]);
+            }
+        }
+
+        function updateContent(translations) {
+            document.getElementById('courses-title').textContent = translations['courses_title'];
+            document.getElementById('courses-subtitle').textContent = translations['courses_subtitle'];
+            document.getElementById('nav-links-courses').innerHTML = `<i class="fas fa-book"></i> ${translations['nav_links_courses']}`;
+            document.getElementById('nav-links-aufgaben').innerHTML = `<i class="fas fa-tasks"></i> ${translations['nav_links_aufgaben']}`;
+
+            // Kurse aktualisieren
+            document.getElementById('organic-chemistry-title').textContent = translations['organic_chemistry_title'];
+            document.getElementById('organic-chemistry-description').textContent = translations['organic_chemistry_description'];
+            document.getElementById('energetics-title').textContent = translations['energetics_title'];
+            document.getElementById('energetics-description').textContent = translations['energetics_description'];
+            document.getElementById('redox-title').textContent = translations['redox_title'];
+            document.getElementById('redox-description').textContent = translations['redox_description'];
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const languageDropdown = document.getElementById('language-dropdown');
+            const savedLanguage = localStorage.getItem('selectedLanguage');
+            setLanguage(savedLanguage || 'en');
+            languageDropdown.addEventListener('change', function() {
+                const selectedLanguage = this.value;
+                localStorage.setItem('selectedLanguage', selectedLanguage);
+                setLanguage(selectedLanguage);
+            });
+        });
+    </script>
+</body>
+
+</html>

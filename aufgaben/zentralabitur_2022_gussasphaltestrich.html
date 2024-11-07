@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../styles.css">
+    <title>Zentralabitur 2022 - Gussasphaltestrich Aufgabe</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            background-color: #f9f9f9;
+            font-family: 'Open Sans', Arial, sans-serif;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-title {
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .task-description {
+            font-size: 1.2em;
+            color: #555;
+            margin-bottom: 30px;
+        }
+
+        .highlight {
+            display: block;
+            background-color: #eef9f1;
+            color: #333;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 20px 0;
+            font-size: 1em;
+        }
+
+        .m1a {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #2e8b47;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+
+        .solution-button {
+            display: block;
+            background-color: #39b54a;
+            color: #ffffff;
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .solution-button:hover {
+            background-color: #2e8b47;
+        }
+
+        .why-button {
+            display: block;
+            background-color: #f39c12;
+            color: #ffffff;
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .why-button:hover {
+            background-color: #e67e22;
+        }
+
+        .solution-content {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f1f1f1;
+            border-radius: 10px;
+            color: #555;
+            font-size: 1em;
+            font-weight: normal;
+        }
+
+        .why-content {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff9e6;
+            border-radius: 10px;
+            color: #555;
+            font-style: italic;
+            font-size: 1em;
+            font-weight: normal;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="task-title">Zentralabitur 2022 - Gussasphaltestrich</div>
+        <div class="task-description">
+            1.4. Erklären Sie mit Hilfe von Struktur-Eigenschaftsbeziehungen, weshalb Gussasphaltestrich wasserabweisend ist.<br>
+            <span class="m1a">M3)</span>
+            <div class="highlight">Gussasphaltestrich ist wasserabweisend und resistent gegen die meisten alkalischen und sauren Lösungen und somit auch für Industriefußböden interessant. Durch Erhitzen auf ca. 250°C ist Gussasphaltestrich beim Einbau gießfähig. Er lässt sich nach einer kurzen Abkühlzeit von ca. 2 Stunden begehen. Ein wesentlicher Bestandteil von Gussasphaltestrich ist Bitumen. Bitumen ist ein sehr zähflüssiges, schwerflüchtiges, dunkel gefärbtes Gemisch aus vielen verschiedenen organischen Verbindungen, das als Rückstand aus der Verarbeitung von Rohöl gewonnen wird. Bitumen besteht - sehr stark vereinfacht - aus zwei Phasen: einer öligen Phase (Maltene) und einer festen Phase (Asphaltene). Zu den Maltenen gehören u.a. Pentan- und Heptan-Isomere sowie Cycloalkane wie z.B. Ringe mit sieben Kohlenstoffatomen.</div>
+        </div>
+        <a class="solution-button" id="solution-button">Lösung anzeigen</a>
+        <div class="solution-content" id="solution-content">
+            <p>Bei den in Bitumen vorkommenden Stoffen handelt es sich um organische Verbindungen, deren Moleküle aus Kohlenstoff- und Wasserstoffatomen bestehen. Die C-H-Bindung ist unpolar, da die Elektronegativitätsdifferenz ΔEN(C-H) etwa 0,4 beträgt. In den Molekülen der Malten-Phase liegen somit hauptsächlich unpolare Elektronenpaarbindungen vor. Die überwiegend unpolaren Bindungen und die wenigen polaren Bindungen durch Stickstoff- und Sauerstoffatome führen zu einem geringen Dipolcharakter. Daraus folgt, dass Bitumen hydrophob ist und wasserabweisende Eigenschaften besitzt.</p>
+        </div>
+        <a class="why-button" id="why-button">Warum?</a>
+        <div class="why-content" id="why-content">
+            <p>Bitumen besteht aus einer Mischung von öligen und festen Bestandteilen. Die ölige Phase (Maltene) verhält sich hydrophob, was bedeutet, dass sie Wasser abweist. Dies ist ähnlich wie bei Öl auf Wasser: Das Öl schwimmt oben und mischt sich nicht mit dem Wasser. Aus diesem Grund dringt Wasser nicht in den Gussasphaltestrich ein und macht ihn ideal für den Einsatz an Orten, an denen eine hohe Feuchtigkeitsresistenz erforderlich ist.</p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('solution-button').addEventListener('click', function() {
+            const solutionContent = document.getElementById('solution-content');
+            if (solutionContent.style.display === 'none' || solutionContent.style.display === '') {
+                solutionContent.style.display = 'block';
+                this.textContent = 'Lösung ausblenden';
+            } else {
+                solutionContent.style.display = 'none';
+                this.textContent = 'Lösung anzeigen';
+            }
+        });
+
+        document.getElementById('why-button').addEventListener('click', function() {
+            const whyContent = document.getElementById('why-content');
+            if (whyContent.style.display === 'none' || whyContent.style.display === '') {
+                whyContent.style.display = 'block';
+                this.textContent = 'Warum ausblenden';
+            } else {
+                whyContent.style.display = 'none';
+                this.textContent = 'Warum?';
+            }
+        });
+    </script>
+</body>
+
+</html>

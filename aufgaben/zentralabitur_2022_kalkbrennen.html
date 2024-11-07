@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../styles.css">
+    <title>Zentralabitur 2022 - Kalkbrennen Aufgabe</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            background-color: #f9f9f9;
+            font-family: 'Open Sans', Arial, sans-serif;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-title {
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .task-description {
+            font-size: 1.2em;
+            color: #555;
+            margin-bottom: 30px;
+        }
+
+        .chemical-reaction {
+            display: block;
+            background-color: #eef9f1;
+            color: #333;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            font-size: 1.2em;
+        }
+
+        .m1a {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #2e8b47;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+
+        .solution-button {
+            display: block;
+            background-color: #39b54a;
+            color: #ffffff;
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .solution-button:hover {
+            background-color: #2e8b47;
+        }
+
+        .why-button {
+            display: block;
+            background-color: #f39c12;
+            color: #ffffff;
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .why-button:hover {
+            background-color: #e67e22;
+        }
+
+        .solution-content {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f1f1f1;
+            border-radius: 10px;
+            color: #555;
+        }
+
+        .why-content {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff9e6;
+            border-radius: 10px;
+            color: #555;
+            font-style: italic;
+        }
+
+        .calculation {
+            background-color: #eef1fb;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 1.1em;
+            color: #333;
+            line-height: 1.8;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="task-title">Zentralabitur 2022 - Kalkbrennen</div>
+        <div class="task-description">
+            1.2. Berechnen Sie die molare Standardreaktionsenthalpie für das Brennen des Kalks.<br>
+            <span class="m1a">M1a)</span> <span class="chemical-reaction">CaCO<sub>3</sub> (s) &rarr; CaO (s) + CO<sub>2</sub> (g)</span>
+        </div>
+        <a class="solution-button" id="solution-button">Lösung anzeigen</a>
+        <div class="solution-content" id="solution-content">
+            <p>Die molare Standardreaktionsenthalpie für das Brennen von Kalk (CaCO<sub>3</sub>) beträgt 178 kJ/mol. Dies ergibt sich aus den Standardbildungsenthalpien der Edukte und Produkte:</p>
+            <div class="calculation">
+                <ul>
+                    <li>&Delta;H<sub>f</sub><sup>&deg;</sup> (CaCO<sub>3</sub>) = -1207 kJ/mol</li>
+                    <li>&Delta;H<sub>f</sub><sup>&deg;</sup> (CaO) = -635.5 kJ/mol</li>
+                    <li>&Delta;H<sub>f</sub><sup>&deg;</sup> (CO<sub>2</sub>) = -393.5 kJ/mol</li>
+                </ul>
+                <p>Berechnung der Reaktionsenthalpie:</p>
+                <p>&Delta;H<sub>r</sub><sup>&deg;</sup> = [&Delta;H<sub>f</sub><sup>&deg;</sup> (CaO) + &Delta;H<sub>f</sub><sup>&deg;</sup> (CO<sub>2</sub>)] - &Delta;H<sub>f</sub><sup>&deg;</sup> (CaCO<sub>3</sub>)</p>
+                <p>&Delta;H<sub>r</sub><sup>&deg;</sup> = [(-635.5) + (-393.5)] - (-1207)</p>
+                <p>&Delta;H<sub>r</sub><sup>&deg;</sup> = -1029 + 1207</p>
+                <p><strong>&Delta;H<sub>r</sub><sup>&deg;</sup> = 178 kJ/mol</strong></p>
+            </div>
+        </div>
+        <a class="why-button" id="why-button">Warum?</a>
+        <div class="why-content" id="why-content">
+            <p>Bei dieser Aufgabe berechnen wir die Energiemenge, die bei der chemischen Reaktion freigesetzt oder verbraucht wird. Das Ziel ist, die Differenz zwischen der Energie der Ausgangsstoffe (Edukte) und der Produkte zu bestimmen. Indem wir die Standardbildungsenthalpien verwenden, können wir herausfinden, wie viel Energie für die Herstellung oder den Abbau jeder Verbindung benötigt wird. Einfach gesagt: Wir schauen uns an, wie viel Energie es kostet, die chemische Verbindung zu trennen und neue zu bilden, und berechnen daraus, ob die Reaktion insgesamt Energie freisetzt oder benötigt.</p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('solution-button').addEventListener('click', function() {
+            const solutionContent = document.getElementById('solution-content');
+            if (solutionContent.style.display === 'none' || solutionContent.style.display === '') {
+                solutionContent.style.display = 'block';
+                this.textContent = 'Lösung ausblenden';
+            } else {
+                solutionContent.style.display = 'none';
+                this.textContent = 'Lösung anzeigen';
+            }
+        });
+
+        document.getElementById('why-button').addEventListener('click', function() {
+            const whyContent = document.getElementById('why-content');
+            if (whyContent.style.display === 'none' || whyContent.style.display === '') {
+                whyContent.style.display = 'block';
+                this.textContent = 'Warum ausblenden';
+            } else {
+                whyContent.style.display = 'none';
+                this.textContent = 'Warum?';
+            }
+        });
+    </script>
+</body>
+
+</html>

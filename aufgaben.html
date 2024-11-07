@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Abitur Aufgaben - Chemify</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #f9f9f9;
+            font-family: 'Open Sans', Arial, sans-serif;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        #search-bar {
+            padding: 10px;
+            width: 100%;
+            border-radius: 20px;
+            border: 1px solid #ccc;
+        }
+
+        .aufgabe-card {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .aufgabe-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .aufgabe-tags {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .solution-link {
+            margin-top: 10px;
+            display: block;
+            color: #39b54a;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .solution-link:hover {
+            text-decoration: underline;
+        }
+
+        .solution-content {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f1f1f1;
+            border-radius: 10px;
+            color: #555;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <div class="nav-container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; background-color: #ffffff; box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1); width: 100%;">
+            <div class="nav-left" style="display: flex; align-items: center; gap: 30px;">
+                <img src="images/Chemify_Logo.png" alt="Chemify Logo" id="site-logo" style="height: 70px; width: auto;">
+                <ul class="nav-links" style="display: flex; list-style: none; gap: 30px;">
+                    <li><a href="courses.html" style="text-decoration: none; color: #333; font-weight: 700; transition: color 0.3s ease;" id="nav-links-courses"><i class="fas fa-book"></i> Courses</a></li>
+                    <li><a href="aufgaben.html" style="text-decoration: none; color: #333; font-weight: 700; transition: color 0.3s ease;" id="nav-links-aufgaben"><i class="fas fa-tasks"></i> Aufgaben</a></li>
+                </ul>
+            </div>
+            <div class="nav-right" style="display: flex; align-items: center; gap: 30px;">
+                <div class="language-selector">
+                    <select id="language-dropdown" style="background-color: #ffffff; color: #333; border: 1px solid #ccc; font-weight: bold;">
+                        <option value="en">🇬🇧 English</option>
+                        <option value="de">🇩🇪 Deutsch</option>
+                    </select>
+                </div>
+                <div class="search-container" style="position: relative;">
+                    <input type="text" id="search-bar" placeholder="Search..." style="padding: 10px 40px 10px 10px; border-radius: 20px; border: 1px solid #ccc;">
+                    <button class="search-button" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #777; cursor: pointer;"><i class="fas fa-search"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+        <!-- Aufgaben Section -->
+            <div class="aufgabe-card" data-tags="chemie, energetik, thermochemie, abitur" onclick="window.location.href='aufgaben/zentralabitur_2022_kalkbrennen.html'">
+                <div class="aufgabe-title">Zentralabitur 2022 Aufgabe II - Kalkbrennen</div>
+                <div class="aufgabe-tags">Tags: Chemie, Energetik, Thermochemie, Abitur</div>
+            </div>
+
+            <div class="aufgabe-card" data-tags="chemie, struktur-eigenschaften, organik, abitur" onclick="window.location.href='aufgaben/zentralabitur_2022_gussasphaltestrich.html'">
+                <div class="aufgabe-title">Zentralabitur 2022 Aufgabe II - Gussasphaltestrich</div>
+                <div class="aufgabe-tags">Tags: Chemie, Struktur-Eigenschaften, Organik, Abitur</div>
+            </div>
+
+            <div class="aufgabe-card" data-tags="chemie, organik, polymerisation, abitur" onclick="window.location.href='aufgaben/zentralabitur_2023_polyvinylbutyral.html'">
+                <div class="aufgabe-title">Zentralabitur 2023 Aufgabe I - Synthese von Polyvinylbutyral</div>
+                <div class="aufgabe-tags">Tags: Chemie, Organik, Polymerisation, Abitur</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Suchfunktion für die Abituraufgaben
+        document.getElementById('search-bar').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const aufgaben = document.querySelectorAll('.aufgabe-card');
+
+            aufgaben.forEach(aufgabe => {
+                const tags = aufgabe.getAttribute('data-tags');
+                if (tags.toLowerCase().includes(searchTerm)) {
+                    aufgabe.style.display = 'block';
+                } else {
+                    aufgabe.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
