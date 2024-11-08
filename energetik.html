@@ -168,6 +168,31 @@
 
 <body>
 
+    <nav>
+        <div class="nav-container">
+            <div class="nav-left">
+                <img src="images/Chemify_Logo.png" alt="Chemify Logo" id="site-logo" style="height: 70px; width: auto;" loading="lazy">
+                <span class="hamburger" onclick="toggleMenu()">&#9776;</span>
+                <ul class="nav-links">
+                    <li><a href="index.html" id="nav-links-courses"><i class="fas fa-book"></i> Kurse</a></li>
+                    <li><a href="aufgaben.html" id="nav-links-aufgaben"><i class="fas fa-tasks"></i> Aufgaben</a></li>
+                </ul>
+            </div>
+            <div class="nav-right">
+                <div class="language-selector">
+                    <select id="language-dropdown">
+                        <option value="en">🇬🇧 English</option>
+                        <option value="de">🇩🇪 Deutsch</option>
+                    </select>
+                </div>
+                <div class="search-container">
+                    <input type="text" id="search-bar" class="search-bar" placeholder="Suche...">
+                    <button class="search-button"><i class="fas fa-search"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
     <div class="container">
         <!-- Level 1 Content -->
         <section class="lesson-content visible" id="level1">
