@@ -83,12 +83,6 @@
                 </ul>
             </div>
             <div class="nav-right" style="display: flex; align-items: center; gap: 30px;">
-                <div class="language-selector">
-                    <select id="language-dropdown" style="background-color: #ffffff; color: #333; border: 1px solid #ccc; font-weight: bold;">
-                        <option value="en">🇬🇧 English</option>
-                        <option value="de">🇩🇪 Deutsch</option>
-                    </select>
-                </div>
                 <div class="search-container" style="position: relative;">
                     <input type="text" id="search-bar" placeholder="Search..." style="padding: 10px 40px 10px 10px; border-radius: 20px; border: 1px solid #ccc;">
                     <button class="search-button" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #777; cursor: pointer;"><i class="fas fa-search"></i></button>
@@ -98,7 +92,7 @@
     </nav>
 
     <div class="container">
-        <!-- Aufgaben Section with Task Texts and Solutions -->
+        <!-- Original Aufgaben Section -->
         <div class="aufgabe-card" data-tags="chemie, energetik, thermochemie, abitur" onclick="toggleSolution('solution1')">
             <div class="aufgabe-title">Zentralabitur 2022 Aufgabe II - Kalkbrennen</div>
             <div class="aufgabe-tags">Tags: Chemie, Energetik, Thermochemie, Abitur</div>
@@ -109,80 +103,60 @@
             </div>
         </div>
 
-        <div class="aufgabe-card" data-tags="chemie, struktur-eigenschaften, organik, abitur" onclick="toggleSolution('solution2')">
-            <div class="aufgabe-title">Zentralabitur 2022 Aufgabe II - Gussasphaltestrich</div>
-            <div class="aufgabe-tags">Tags: Chemie, Struktur-Eigenschaften, Organik, Abitur</div>
-            <p>Aufgabe: Analysieren Sie die chemischen und physikalischen Eigenschaften von Gussasphaltestrich.</p>
-            <div id="solution2" class="solution-content">
+        <!-- New Calculation-Based Aufgaben -->
+        <div class="aufgabe-card" data-tags="chemie, energetik, abitur, berechnung" onclick="toggleSolution('solution7')">
+            <div class="aufgabe-title">Energetik - Berechnung der Verbrennungsenthalpie</div>
+            <div class="aufgabe-tags">Tags: Chemie, Energetik, Abitur, Berechnung</div>
+            <p>Aufgabe: Berechnen Sie die Verbrennungsenthalpie von Propan (C₃H₈) unter Verwendung der Standardbildungsenthalpien.</p>
+            <div id="solution7" class="solution-content">
                 <h3>Lösung:</h3>
-                <p>Gussasphaltestrich ist eine Mischung aus Bitumen und mineralischen Füllstoffen. Die Stabilität und Beständigkeit gegen Wasser hängen von der chemischen Struktur der Bestandteile ab.</p>
+                <p>Die Verbrennungsenthalpie von Propan kann durch die Differenz der Bildungsenthalpien der Produkte und der Edukte berechnet werden. Sie beträgt -2219 kJ/mol.</p>
             </div>
         </div>
 
-        <div class="aufgabe-card" data-tags="chemie, organik, polymerisation, abitur" onclick="toggleSolution('solution3')">
-            <div class="aufgabe-title">Zentralabitur 2023 Aufgabe I - Synthese von Polyvinylbutyral</div>
-            <div class="aufgabe-tags">Tags: Chemie, Organik, Polymerisation, Abitur</div>
-            <p>Aufgabe: Beschreiben Sie den Prozess der Polymerisation zur Herstellung von Polyvinylbutyral (PVB).</p>
-            <div id="solution3" class="solution-content">
+        <div class="aufgabe-card" data-tags="chemie, reaktionsenthalpie, abitur, berechnung" onclick="toggleSolution('solution8')">
+            <div class="aufgabe-title">Reaktionsenthalpie - Berechnung</div>
+            <div class="aufgabe-tags">Tags: Chemie, Reaktionsenthalpie, Abitur, Berechnung</div>
+            <p>Aufgabe: Berechnen Sie die Reaktionsenthalpie für die Neutralisation von Salzsäure (HCl) und Natronlauge (NaOH) im Wasser.</p>
+            <div id="solution8" class="solution-content">
                 <h3>Lösung:</h3>
-                <p>PVB entsteht durch die Polymerisation von Vinylbutyral. Es wird häufig in Sicherheitsglas eingesetzt, da es hohe Festigkeit und Flexibilität bietet.</p>
+                <p>Die Reaktionsenthalpie der Neutralisation beträgt ca. -57 kJ/mol, was der Standardneutralisationsenthalpie für starke Säuren und Basen entspricht.</p>
             </div>
         </div>
 
-        <!-- Additional Tasks with Solutions -->
-        <div class="aufgabe-card" data-tags="chemie, energetik, reaktionsenthalpie, abitur" onclick="toggleSolution('solution4')">
-            <div class="aufgabe-title">Zentralabitur 2021 Aufgabe I - Reaktionsenthalpie Berechnung</div>
-            <div class="aufgabe-tags">Tags: Chemie, Energetik, Reaktionsenthalpie, Abitur</div>
-            <p>Aufgabe: Berechnen Sie die Reaktionsenthalpie für die Verbrennung von Methan.</p>
-            <div id="solution4" class="solution-content">
+        <div class="aufgabe-card" data-tags="chemie, energetik, abitur, berechnung, aufgabe" onclick="toggleSolution('solution9')">
+            <div class="aufgabe-title">Energetik - Berechnung der spezifischen Wärmekapazität</div>
+            <div class="aufgabe-tags">Tags: Chemie, Energetik, Berechnung, Wärmekapazität, Abitur</div>
+            <p>Aufgabe: Berechnen Sie die spezifische Wärmekapazität eines Metalls, wenn 500 J benötigt werden, um 100 g des Metalls um 10 °C zu erwärmen.</p>
+            <div id="solution9" class="solution-content">
                 <h3>Lösung:</h3>
-                <p>Die Reaktionsenthalpie für die Verbrennung von Methan (CH₄) in CO₂ und H₂O kann durch Summierung der Bindungsenergien berechnet werden. Die Gesamtenergie ist -890 kJ/mol.</p>
+                <p>Die spezifische Wärmekapazität (c) kann mit der Formel \(c = \frac{Q}{m \cdot \Delta T}\) berechnet werden. Hier beträgt c = 0,5 J/g°C.</p>
             </div>
         </div>
 
-        <div class="aufgabe-card" data-tags="chemie, struktur-eigenschaften, chemische-bindung, abitur" onclick="toggleSolution('solution5')">
-            <div class="aufgabe-title">Zentralabitur 2020 Aufgabe II - Analyse der chemischen Bindung</div>
-            <div class="aufgabe-tags">Tags: Chemie, Strukturelle Eigenschaften, Chemische Bindung, Abitur</div>
-            <p>Aufgabe: Untersuchen Sie die Bindungseigenschaften von Ionenverbindungen und kovalenten Verbindungen.</p>
-            <div id="solution5" class="solution-content">
-                <h3>Lösung:</h3>
-                <p>Ionenbindungen entstehen durch den Austausch von Elektronen, während kovalente Bindungen durch das Teilen von Elektronenpaaren zustande kommen.</p>
-            </div>
-        </div>
+        <!-- Function for Toggling Solutions -->
+        <script>
+            function toggleSolution(solutionId) {
+                const solution = document.getElementById(solutionId);
+                solution.style.display = solution.style.display === 'block' ? 'none' : 'block';
+            }
 
-        <div class="aufgabe-card" data-tags="chemie, organik, funktionelle-gruppen, abitur" onclick="toggleSolution('solution6')">
-            <div class="aufgabe-title">Zentralabitur 2023 Aufgabe II - Funktionelle Gruppen in der Organik</div>
-            <div class="aufgabe-tags">Tags: Chemie, Organik, Funktionelle Gruppen, Abitur</div>
-            <p>Aufgabe: Beschreiben Sie die funktionellen Gruppen der Organik und deren Bedeutung in Reaktionen.</p>
-            <div id="solution6" class="solution-content">
-                <h3>Lösung:</h3>
-                <p>Funktionelle Gruppen wie Hydroxyl-, Carboxyl- und Aminogruppen beeinflussen das Reaktionsverhalten organischer Moleküle und deren Polarität.</p>
-            </div>
-        </div>
-    </div>
+            // Search function for filtering tasks
+            document.getElementById('search-bar').addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const aufgaben = document.querySelectorAll('.aufgabe-card');
 
-    <script>
-        // Function to toggle solution visibility
-        function toggleSolution(solutionId) {
-            const solution = document.getElementById(solutionId);
-            solution.style.display = solution.style.display === 'block' ? 'none' : 'block';
-        }
-
-        // Search function for filtering tasks
-        document.getElementById('search-bar').addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const aufgaben = document.querySelectorAll('.aufgabe-card');
-
-            aufgaben.forEach(aufgabe => {
-                const tags = aufgabe.getAttribute('data-tags');
-                if (tags.toLowerCase().includes(searchTerm)) {
-                    aufgabe.style.display = 'block';
-                } else {
-                    aufgabe.style.display = 'none';
-                }
+                aufgaben.forEach(aufgabe => {
+                    const tags = aufgabe.getAttribute('data-tags');
+                    if (tags.toLowerCase().includes(searchTerm)) {
+                        aufgabe.style.display = 'block';
+                    } else {
+                        aufgabe.style.display = 'none';
+                    }
+                });
             });
-        });
-    </script>
+        </script>
+    </div>
 </body>
 
 </html>
