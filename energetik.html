@@ -7,7 +7,7 @@
     <title>Energetik - Alle Level</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap">
     <style>
-        /* Allgemeine Stile */
+        /* General Styles */
         * {
             margin: 0;
             padding: 0;
@@ -15,14 +15,13 @@
         }
 
         body {
-            background-color: #f9f9f9;
+            background-color: #f2f5f9;
             font-family: 'Open Sans', Arial, sans-serif;
-            line-height: 1.6;
             display: flex;
             flex-direction: column;
             align-items: center;
-            overflow-x: hidden;
             padding-top: 20px;
+            color: #333;
         }
 
         .container {
@@ -31,10 +30,10 @@
         }
 
         .lesson-content {
-            padding: 50px 20px;
+            padding: 40px 20px;
             background-color: #ffffff;
-            border-radius: 20px;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
             margin: 40px auto;
             overflow: hidden;
             max-height: 0;
@@ -51,27 +50,29 @@
         }
 
         h1, h2 {
-            color: #333;
+            color: #2c3e50;
+            margin-bottom: 15px;
         }
 
         p {
             color: #555;
             margin-top: 10px;
+            line-height: 1.6;
         }
 
         .progress-bar {
             width: 100%;
-            height: 10px;
-            background-color: #e0e0e0;
-            border-radius: 5px;
+            height: 8px;
+            background-color: #dfe6e9;
+            border-radius: 4px;
             margin: 20px 0;
             position: relative;
         }
 
         .progress-bar-fill {
             height: 100%;
-            background-color: #39b54a;
-            border-radius: 5px;
+            background-color: #3498db;
+            border-radius: 4px;
         }
 
         .quiz {
@@ -81,6 +82,7 @@
         .quiz-question {
             font-weight: bold;
             margin-top: 20px;
+            color: #34495e;
         }
 
         .answer-options {
@@ -102,20 +104,22 @@
             font-size: 1.2em;
             text-align: center;
             transition: background-color 0.3s ease;
-            display: inline-block;
             max-width: 100%;
             white-space: normal;
         }
 
+        .answer-button:hover {
+            background-color: #34495e;
+        }
+
         .answer-button.correct {
-            background-color: #39b54a;
-            border-color: #39b54a;
-            animation: correct-answer 0.4s ease-in;
+            background-color: #27ae60;
+            border-color: #27ae60;
         }
 
         .answer-button.incorrect {
-            background-color: #ff4d4f;
-            border-color: #ff4d4f;
+            background-color: #e74c3c;
+            border-color: #e74c3c;
         }
 
         .feedback {
@@ -124,22 +128,16 @@
         }
 
         .feedback.incorrect {
-            color: #ff4d4f;
+            color: #e74c3c;
         }
 
         .feedback.correct {
-            color: #39b54a;
-        }
-
-        @keyframes correct-answer {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
+            color: #27ae60;
         }
 
         .continue-button {
             padding: 15px 30px;
-            background-color: #39b54a;
+            background-color: #3498db;
             color: #ffffff;
             border: none;
             border-radius: 10px;
@@ -153,31 +151,27 @@
         }
 
         .continue-button:hover {
-            background-color: #2e8b47;
+            background-color: #2980b9;
         }
 
-        pre {
-            background-color: #f0f0f0;
-            padding: 15px;
-            border-radius: 5px;
-            overflow-x: auto;
-        }
-
-        /* Responsive Navigation Styles */
+        /* Navigation Styles */
         .nav-container {
             width: 100%;
             background-color: #ffffff;
             box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1);
-            padding: 10px 20px;
+            padding: 15px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
 
         .nav-left {
             display: flex;
             align-items: center;
-            gap: 30px;
+            gap: 20px;
         }
 
         .nav-left img {
@@ -192,28 +186,19 @@
 
         .nav-links a {
             text-decoration: none;
-            color: #333;
+            color: #3498db;
             font-weight: bold;
             transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #2980b9;
         }
 
         .hamburger {
             display: none;
             font-size: 24px;
             cursor: pointer;
-        }
-
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .language-selector select {
-            padding: 5px;
-            font-weight: bold;
-            border-radius: 5px;
-            border: 1px solid #ccc;
         }
 
         .search-container {
@@ -249,6 +234,7 @@
                 left: 0;
                 width: 100%;
                 box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+                padding: 20px 0;
             }
 
             .nav-links.show {
@@ -259,10 +245,13 @@
                 display: block;
             }
 
-            .nav-right {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
+            .search-container {
+                margin-top: 10px;
+                width: 100%;
+            }
+
+            .search-bar {
+                width: calc(100% - 50px);
             }
         }
     </style>
@@ -277,21 +266,13 @@
                 <img src="images/Chemify_Logo.png" alt="Chemify Logo" id="site-logo" loading="lazy">
                 <span class="hamburger" onclick="toggleMenu()">&#9776;</span>
                 <ul class="nav-links" id="navLinks">
-                    <li><a href="index.html" id="nav-links-courses"><i class="fas fa-book"></i> Kurse</a></li>
-                    <li><a href="aufgaben.html" id="nav-links-aufgaben"><i class="fas fa-tasks"></i> Aufgaben</a></li>
+                    <li><a href="index.html"><i class="fas fa-book"></i> Kurse</a></li>
+                    <li><a href="aufgaben.html"><i class="fas fa-tasks"></i> Aufgaben</a></li>
                 </ul>
             </div>
-            <div class="nav-right">
-                <div class="language-selector">
-                    <select id="language-dropdown">
-                        <option value="en">🇬🇧 English</option>
-                        <option value="de">🇩🇪 Deutsch</option>
-                    </select>
-                </div>
-                <div class="search-container">
-                    <input type="text" id="search-bar" class="search-bar" placeholder="Suche...">
-                    <button class="search-button"><i class="fas fa-search"></i></button>
-                </div>
+            <div class="search-container">
+                <input type="text" id="search-bar" class="search-bar" placeholder="Suche...">
+                <button class="search-button"><i class="fas fa-search"></i></button>
             </div>
         </div>
     </nav>
