@@ -1,13 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="styles.css">
-    <title>Lesson 1 - Introduction to Organic Chemistry</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap"> <!-- Google Fonts -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> <!-- Font Awesome for Icons -->
+    <title>Organische Chemie - Alle Level</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap">
     <style>
         /* General Styles */
         * {
@@ -20,10 +18,16 @@
             background-color: #f9f9f9;
             font-family: 'Open Sans', Arial, sans-serif;
             line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            padding-top: 20px;
         }
 
-        .nav-container {
-            width: 100%;
+        .container {
+            max-width: 800px;
+            width: 90%;
         }
 
         .lesson-content {
@@ -32,9 +36,18 @@
             border-radius: 20px;
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
             margin: 40px auto;
-            max-width: 800px;
-            overflow-y: auto;
-            max-height: calc(100vh - 150px);
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transform: scaleY(0);
+            transform-origin: top;
+            transition: max-height 0.5s ease, opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .lesson-content.visible {
+            max-height: 4000px;
+            opacity: 1;
+            transform: scaleY(1);
         }
 
         h1, h2 {
@@ -44,33 +57,6 @@
         p {
             color: #555;
             margin-top: 10px;
-        }
-
-        .quiz {
-            margin-top: 40px;
-        }
-
-        .quiz-question {
-            font-weight: bold;
-            margin-top: 20px;
-        }
-
-        .quiz-option {
-            margin-top: 10px;
-        }
-
-        .continue-button {
-            padding: 15px 30px;
-            background-color: #39b54a;
-            color: #ffffff;
-            border: none;
-            border-radius: 10px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 30px;
-            display: block;
-            width: fit-content;
-            margin-left: auto;
         }
 
         .progress-bar {
@@ -83,39 +69,52 @@
         }
 
         .progress-bar-fill {
-            width: 20%;
             height: 100%;
             background-color: #39b54a;
             border-radius: 5px;
         }
 
-        .question-container {
-            margin-top: 30px;
-            text-align: center;
+        .quiz {
+            margin-top: 40px;
+        }
+
+        .quiz-question {
+            font-weight: bold;
+            margin-top: 20px;
         }
 
         .answer-options {
-            display: block;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 5px;
-            justify-items: center;
+            display: flex;
+            flex-direction: column;
             align-items: center;
+            gap: 10px;
             margin-top: 20px;
         }
 
         .answer-button {
-            padding: 20px;
+            padding: 15px 20px;
             border: 2px solid #555;
             background-color: #555;
             color: #ffffff;
             border-radius: 10px;
             font-weight: bold;
             cursor: pointer;
-            width: 80%;
-            max-width: 150px;
+            font-size: 1.2em;
             text-align: center;
             transition: background-color 0.3s ease;
-            font-size: 1.5em;
+            display: inline-block;
+            max-width: 100%;
+            white-space: normal;
+        }
+
+        .answer-button.correct {
+            background-color: #39b54a;
+            border-color: #39b54a;
+        }
+
+        .answer-button.incorrect {
+            background-color: #ff4d4f;
+            border-color: #ff4d4f;
         }
 
         .feedback {
@@ -131,133 +130,126 @@
             color: #39b54a;
         }
 
-        .why-popup {
-            display: none;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            z-index: 100;
-        }
-
-        .why-popup p {
-            color: #333;
-        }
-
-        .close-why {
-            margin-top: 10px;
-            padding: 10px 20px;
+        .continue-button {
+            padding: 15px 30px;
             background-color: #39b54a;
             color: #ffffff;
             border: none;
-            border-radius: 5px;
+            border-radius: 10px;
+            font-weight: bold;
             cursor: pointer;
+            margin-top: 30px;
+            display: block;
+            width: fit-content;
+            margin-left: auto;
         }
     </style>
 </head>
 
 <body>
-    <!-- Navigation Bar -->
-    <nav>
-        <div class="nav-container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; background-color: #ffffff; box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1); width: 100%;">
-            <div class="nav-left" style="display: flex; align-items: center; gap: 30px;">
-                <img src="images/Chemify_Logo.png" alt="Chemify Logo" id="site-logo" style="height: 70px; width: auto;">
-                <ul class="nav-links" style="display: flex; list-style: none; gap: 30px;">
-                    <li><a href="courses.html" style="text-decoration: none; color: #333; font-weight: 700; transition: color 0.3s ease;" id="nav-links-courses"><i class="fas fa-book"></i> Courses</a></li>
-                </ul>
-            </div>
-            <div class="nav-right" style="display: flex; align-items: center; gap: 30px;">
-                <div class="language-selector">
-                    <select id="language-dropdown" style="background-color: #ffffff; color: #333; border: 1px solid #ccc; font-weight: bold;">
-                        <option value="en">🇬🇧 English</option>
-                        <option value="de">🇩🇪 Deutsch</option>
-                    </select>
-                </div>
-                <div class="search-container" style="position: relative;">
-                    <input type="text" id="search-bar" placeholder="Search..." style="padding: 10px 40px 10px 10px; border-radius: 20px; border: 1px solid #ccc;">
-                    <button class="search-button" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #777; cursor: pointer;"><i class="fas fa-search"></i></button>
-                </div>
-            </div>
-        </div>
-    </nav>
 
-    <!-- Progress Bar -->
-    <div class="progress-bar">
-        <div class="progress-bar-fill"></div>
+    <div class="container">
+        <!-- Level 1: Introduction to Organic Chemistry -->
+        <section class="lesson-content visible" id="level1">
+            <div class="progress-bar">
+                <div class="progress-bar-fill" style="width: 25%;"></div>
+            </div>
+            <h1>Level 1: Einführung in die organische Chemie</h1>
+            <p><b>Organische Chemie</b> beschäftigt sich mit Kohlenstoffverbindungen. Diese reichen von kleinen Molekülen wie Methan bis hin zu riesigen Molekülen wie DNA.</p>
+            <h2>Warum ist organische Chemie wichtig?</h2>
+            <p>Die organische Chemie spielt eine Schlüsselrolle in vielen Industrien wie der Pharmazie, Lebensmittelchemie, und Petrochemie.</p>
+
+            <div class="quiz">
+                <h2>Quiz</h2>
+                <p class="quiz-question">Was ist ein Beispiel für eine einfache organische Verbindung?</p>
+                <div class="answer-options">
+                    <button class="answer-button" data-correct="true" onclick="unlockLevel('level2')">Methan</button>
+                    <button class="answer-button" data-correct="false">Natriumchlorid</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Level 2: Hydrocarbons -->
+        <section class="lesson-content" id="level2">
+            <div class="progress-bar">
+                <div class="progress-bar-fill" style="width: 50%;"></div>
+            </div>
+            <h1>Level 2: Kohlenwasserstoffe</h1>
+            <p>Kohlenwasserstoffe sind Verbindungen aus Wasserstoff und Kohlenstoff. Sie lassen sich in Alkane, Alkene und Alkine unterteilen.</p>
+            <h2>Beispiel: Alkane, Alkene und Alkine</h2>
+            <p><b>Alkane</b> haben nur Einfachbindungen (C<sub>n</sub>H<sub>2n+2</sub>), <b>Alkene</b> besitzen mindestens eine Doppelbindung (C<sub>n</sub>H<sub>2n</sub>), und <b>Alkine</b> enthalten mindestens eine Dreifachbindung (C<sub>n</sub>H<sub>2n-2</sub>).</p>
+
+            <div class="quiz">
+                <h2>Quiz</h2>
+                <p class="quiz-question">Welcher Kohlenwasserstoff enthält eine Doppelbindung?</p>
+                <div class="answer-options">
+                    <button class="answer-button" data-correct="false">Methan</button>
+                    <button class="answer-button" data-correct="true" onclick="unlockLevel('level3')">Ethen</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Level 3: Functional Groups -->
+        <section class="lesson-content" id="level3">
+            <div class="progress-bar">
+                <div class="progress-bar-fill" style="width: 75%;"></div>
+            </div>
+            <h1>Level 3: Funktionelle Gruppen</h1>
+            <p>Funktionelle Gruppen sind spezielle Gruppen von Atomen, die die Eigenschaften einer Verbindung bestimmen.</p>
+            <h2>Beispiele für funktionelle Gruppen</h2>
+            <p>Alkohole (OH-Gruppe), Carbonsäuren (COOH-Gruppe) und Amine (NH₂-Gruppe) sind einige der wichtigsten funktionellen Gruppen.</p>
+
+            <div class="quiz">
+                <h2>Quiz</h2>
+                <p class="quiz-question">Welche Gruppe gehört zu Alkoholen?</p>
+                <div class="answer-options">
+                    <button class="answer-button" data-correct="true" onclick="unlockLevel('level4')">OH</button>
+                    <button class="answer-button" data-correct="false">COOH</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Level 4: Organic Reactions -->
+        <section class="lesson-content" id="level4">
+            <div class="progress-bar">
+                <div class="progress-bar-fill" style="width: 100%;"></div>
+            </div>
+            <h1>Level 4: Reaktionen in der organischen Chemie</h1>
+            <p>In der organischen Chemie gibt es verschiedene Reaktionsarten wie Substitution, Addition und Eliminierung.</p>
+            <h2>Beispiel: Addition von Brom an ein Alken</h2>
+            <p>Alkene können Brom anlagern, wodurch das Bromwasser entfärbt wird - ein Nachweis für Doppelbindungen.</p>
+
+            <div class="quiz">
+                <h2>Quiz</h2>
+                <p class="quiz-question">Welche Art von Reaktion ist typisch für Alkene?</p>
+                <div class="answer-options">
+                    <button class="answer-button" data-correct="true" onclick="alert('Lesson Complete!')">Addition</button>
+                    <button class="answer-button" data-correct="false">Substitution</button>
+                </div>
+            </div>
+        </section>
     </div>
 
-    <!-- Lesson Content -->
-    <section class="lesson-content">
-        <h1>Introduction to Organic Chemistry</h1>
-        <p>Organic chemistry is the study of the structure, properties, composition, reactions, and preparation of carbon-containing compounds. This includes not only hydrocarbons but also compounds with a variety of other elements such as hydrogen, nitrogen, oxygen, halogens, phosphorus, silicon, and sulfur.</p>
-        <h2>Why is Organic Chemistry Important?</h2>
-        <p>Organic chemistry plays a crucial role in our daily lives. It is the foundation of many industries, including pharmaceuticals, petrochemicals, food, explosives, paints, and cosmetics. The understanding of organic molecules is essential for innovation in biotechnology, medicine, and chemical engineering.</p>
-        <h2>Common Organic Compounds</h2>
-        <p>Some examples of organic compounds that you may be familiar with include methane (a component of natural gas), ethanol (found in alcoholic beverages), and glucose (a type of sugar).</p>
-
-        <h2>Alkanes, Alkenes, and Alkynes</h2>
-        <p>Alkanes are saturated hydrocarbons containing only single bonds, with the general formula C<sub>n</sub>H<sub>2n+2</sub>. Alkenes are unsaturated hydrocarbons with at least one double bond, represented by the formula C<sub>n</sub>H<sub>2n</sub>. Alkynes are also unsaturated but contain at least one triple bond, with the general formula C<sub>n</sub>H<sub>2n-2</sub>.</p>
-
-        <!-- Quiz Section -->
-        <div class="quiz">
-            <h2>Quick Quiz</h2>
-            <div class="question-container">
-                <p class="quiz-question">Which type of hydrocarbon is likely to react with bromine water, causing it to change color?</p>
-                <div class="answer-options">
-                    <button class="answer-button" data-correct="false">Alkane</button>
-                    <button class="answer-button" data-correct="true">Alkene</button>
-                    <button class="answer-button" data-correct="true">Alkyne</button>
-                    <button class="answer-button" data-correct="false">Alcohol</button>
-                </div>
-                <p class="feedback incorrect" style="display: none;">Incorrect. Try again or click "Why?" for more information.</p>
-                <button class="why-button" style="margin-top: 20px; padding: 10px 20px; background-color: #f0f0f0; border: none; border-radius: 5px; cursor: pointer;">Why?</button>
-                <button class="finish-button" style="margin-top: 20px; padding: 10px 20px; background-color: #39b54a; color: #ffffff; border: none; border-radius: 5px; cursor: pointer;">Finish</button>
-                <div class="why-popup">
-                    <p>The correct answer is <strong>Alkene or Alkyne</strong> because both have unsaturated bonds (double or triple) which can react with bromine water, causing decolorization. Alkanes, on the other hand, are saturated and do not react under similar conditions.</p>
-                    <button class="close-why">Close</button>
-                </div>
-            </div>
-        </div>
-
-        <button class="continue-button" onclick="location.href='lesson2.html'">Next Lesson</button>
-    </section>
-
     <script>
+        function unlockLevel(levelId) {
+            const nextLevel = document.getElementById(levelId);
+            if (nextLevel) {
+                nextLevel.classList.add("visible");
+            }
+        }
+
         document.querySelectorAll('.answer-button').forEach(button => {
             button.addEventListener('click', () => {
-                document.querySelectorAll('.answer-button').forEach(btn => {
-                    btn.classList.remove('correct', 'incorrect');
-                    btn.style.border = '2px solid #555';
-                });
+                document.querySelectorAll('.answer-button').forEach(btn => btn.classList.remove('correct', 'incorrect'));
                 if (button.dataset.correct === 'true') {
                     button.classList.add('correct');
-                    button.style.border = '2px solid #39b54a';
-                    document.querySelector('.feedback').classList.remove('incorrect');
-                    document.querySelector('.feedback').classList.add('correct');
-                    document.querySelector('.feedback').textContent = 'Correct! Well done.';
                 } else {
                     button.classList.add('incorrect');
-                    button.style.border = '2px solid #ff4d4f';
-                    document.querySelector('.feedback').classList.remove('correct');
-                    document.querySelector('.feedback').classList.add('incorrect');
-                    document.querySelector('.feedback').textContent = 'Incorrect. Try again or click "Why?" for more information.';
                 }
-                document.querySelector('.feedback').style.display = 'block';
             });
         });
-
-        document.querySelector('.why-button').addEventListener('click', () => {
-            document.querySelector('.why-popup').style.display = 'block';
-        });
-
-        document.querySelector('.close-why').addEventListener('click', () => {
-            document.querySelector('.why-popup').style.display = 'none';
-        });
     </script>
+
 </body>
 
 </html>
