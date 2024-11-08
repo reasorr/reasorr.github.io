@@ -4,11 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="styles.css">
     <title>Abitur Aufgaben - Chemify</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* General Styles */
         * {
             margin: 0;
             padding: 0;
@@ -45,7 +45,6 @@
             padding: 20px;
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
-            position: relative;
             cursor: pointer;
         }
 
@@ -61,19 +60,6 @@
             color: #555;
         }
 
-        .solution-link {
-            margin-top: 10px;
-            display: block;
-            color: #39b54a;
-            text-decoration: none;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .solution-link:hover {
-            text-decoration: underline;
-        }
-
         .solution-content {
             display: none;
             margin-top: 20px;
@@ -86,6 +72,7 @@
 </head>
 
 <body>
+    <!-- Navigation Bar -->
     <nav>
         <div class="nav-container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; background-color: #ffffff; box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1); width: 100%;">
             <div class="nav-left" style="display: flex; align-items: center; gap: 30px;">
@@ -110,26 +97,41 @@
         </div>
     </nav>
 
+    <div class="container">
         <!-- Aufgaben Section -->
-            <div class="aufgabe-card" data-tags="chemie, energetik, thermochemie, abitur" onclick="window.location.href='aufgaben/zentralabitur_2022_kalkbrennen.html'">
-                <div class="aufgabe-title">Zentralabitur 2022 Aufgabe II - Kalkbrennen</div>
-                <div class="aufgabe-tags">Tags: Chemie, Energetik, Thermochemie, Abitur</div>
+        <div class="aufgabe-card" data-tags="chemie, energetik, thermochemie, abitur" onclick="toggleSolution('solution1')">
+            <div class="aufgabe-title">Zentralabitur 2022 Aufgabe II - Kalkbrennen</div>
+            <div class="aufgabe-tags">Tags: Chemie, Energetik, Thermochemie, Abitur</div>
+            <div id="solution1" class="solution-content">
+                <p>Hier ist die Lösung und Erklärungen für die Aufgabe Kalkbrennen.</p>
             </div>
+        </div>
 
-            <div class="aufgabe-card" data-tags="chemie, struktur-eigenschaften, organik, abitur" onclick="window.location.href='aufgaben/zentralabitur_2022_gussasphaltestrich.html'">
-                <div class="aufgabe-title">Zentralabitur 2022 Aufgabe II - Gussasphaltestrich</div>
-                <div class="aufgabe-tags">Tags: Chemie, Struktur-Eigenschaften, Organik, Abitur</div>
+        <div class="aufgabe-card" data-tags="chemie, struktur-eigenschaften, organik, abitur" onclick="toggleSolution('solution2')">
+            <div class="aufgabe-title">Zentralabitur 2022 Aufgabe II - Gussasphaltestrich</div>
+            <div class="aufgabe-tags">Tags: Chemie, Struktur-Eigenschaften, Organik, Abitur</div>
+            <div id="solution2" class="solution-content">
+                <p>Hier ist die Lösung und Erklärungen für die Aufgabe Gussasphaltestrich.</p>
             </div>
+        </div>
 
-            <div class="aufgabe-card" data-tags="chemie, organik, polymerisation, abitur" onclick="window.location.href='aufgaben/zentralabitur_2023_polyvinylbutyral.html'">
-                <div class="aufgabe-title">Zentralabitur 2023 Aufgabe I - Synthese von Polyvinylbutyral</div>
-                <div class="aufgabe-tags">Tags: Chemie, Organik, Polymerisation, Abitur</div>
+        <div class="aufgabe-card" data-tags="chemie, organik, polymerisation, abitur" onclick="toggleSolution('solution3')">
+            <div class="aufgabe-title">Zentralabitur 2023 Aufgabe I - Synthese von Polyvinylbutyral</div>
+            <div class="aufgabe-tags">Tags: Chemie, Organik, Polymerisation, Abitur</div>
+            <div id="solution3" class="solution-content">
+                <p>Hier ist die Lösung und Erklärungen für die Aufgabe Synthese von Polyvinylbutyral.</p>
             </div>
         </div>
     </div>
 
     <script>
-        // Suchfunktion für die Abituraufgaben
+        // Function to toggle solution visibility
+        function toggleSolution(solutionId) {
+            const solution = document.getElementById(solutionId);
+            solution.style.display = solution.style.display === 'block' ? 'none' : 'block';
+        }
+
+        // Search function for filtering tasks
         document.getElementById('search-bar').addEventListener('input', function() {
             const searchTerm = this.value.toLowerCase();
             const aufgaben = document.querySelectorAll('.aufgabe-card');
