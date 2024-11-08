@@ -122,38 +122,6 @@
             border-color: #e74c3c;
         }
 
-        .feedback {
-            margin-top: 20px;
-            font-weight: bold;
-        }
-
-        .feedback.incorrect {
-            color: #e74c3c;
-        }
-
-        .feedback.correct {
-            color: #27ae60;
-        }
-
-        .continue-button {
-            padding: 15px 30px;
-            background-color: #3498db;
-            color: #ffffff;
-            border: none;
-            border-radius: 10px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 30px;
-            display: block;
-            width: fit-content;
-            margin-left: auto;
-            transition: background-color 0.3s;
-        }
-
-        .continue-button:hover {
-            background-color: #2980b9;
-        }
-
         /* Navigation Styles */
         .nav-container {
             width: 100%;
@@ -299,7 +267,28 @@
             </div>
         </section>
 
-        <!-- Additional lesson levels would follow here with similar structure -->
+        <!-- Level 2 Content -->
+        <section class="lesson-content" id="level2">
+            <div class="progress-bar">
+                <div class="progress-bar-fill" style="width: 50%;"></div>
+            </div>
+            <h1>Level 2: Messmethoden und Kalorimetrie</h1>
+            <p><b>Kalorimetrie</b> ist die Methode, mit der wir die Wärme messen, die in chemischen Reaktionen freigesetzt oder aufgenommen wird. Ein <b>Kalorimeter</b> ist ein Gerät, das den Wärmeaustausch misst, ähnlich einer Thermosflasche, die den Wärmeverlust reduziert.</p>
+            <h2>Beispiel: Wärmekapazität von Wasser</h2>
+            <p>Wasser hat eine hohe Wärmekapazität, was bedeutet, dass es viel Energie braucht, um seine Temperatur zu erhöhen. Deshalb erwärmt sich Wasser in einem Topf langsamer als ein Metalltopf selbst.</p>
+
+            <!-- Quiz Section -->
+            <div class="quiz">
+                <h2>Quiz</h2>
+                <p class="quiz-question">Welcher Stoff hat eine höhere Wärmekapazität: Metall oder Wasser?</p>
+                <div class="answer-options">
+                    <button class="answer-button" data-correct="true" onclick="unlockLevel('level3')">Wasser</button>
+                    <button class="answer-button" data-correct="false">Metall</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Additional levels can be added here -->
 
     </div>
 
