@@ -83,6 +83,12 @@
                 </ul>
             </div>
             <div class="nav-right" style="display: flex; align-items: center; gap: 30px;">
+                <div class="language-selector">
+                    <select id="language-dropdown" style="background-color: #ffffff; color: #333; border: 1px solid #ccc; font-weight: bold;">
+                        <option value="en">🇬🇧 English</option>
+                        <option value="de">🇩🇪 Deutsch</option>
+                    </select>
+                </div>
                 <div class="search-container" style="position: relative;">
                     <input type="text" id="search-bar" placeholder="Search..." style="padding: 10px 40px 10px 10px; border-radius: 20px; border: 1px solid #ccc;">
                     <button class="search-button" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #777; cursor: pointer;"><i class="fas fa-search"></i></button>
@@ -92,71 +98,54 @@
     </nav>
 
     <div class="container">
-        <!-- Original Aufgaben Section -->
+        <!-- Aufgaben Section -->
         <div class="aufgabe-card" data-tags="chemie, energetik, thermochemie, abitur" onclick="toggleSolution('solution1')">
             <div class="aufgabe-title">Zentralabitur 2022 Aufgabe II - Kalkbrennen</div>
             <div class="aufgabe-tags">Tags: Chemie, Energetik, Thermochemie, Abitur</div>
-            <p>Aufgabe: Erläutern Sie den Prozess des Kalkbrennens und berechnen Sie die benötigte Energie.</p>
             <div id="solution1" class="solution-content">
-                <h3>Lösung:</h3>
-                <p>Beim Kalkbrennen wird Calciumcarbonat (CaCO₃) zu Calciumoxid (CaO) und Kohlenstoffdioxid (CO₂) zerlegt. Die benötigte Energie lässt sich durch die Reaktionsenthalpie berechnen.</p>
+                <p>Hier ist die Lösung und Erklärungen für die Aufgabe Kalkbrennen.</p>
             </div>
         </div>
 
-        <!-- New Calculation-Based Aufgaben -->
-        <div class="aufgabe-card" data-tags="chemie, energetik, abitur, berechnung" onclick="toggleSolution('solution7')">
-            <div class="aufgabe-title">Energetik - Berechnung der Verbrennungsenthalpie</div>
-            <div class="aufgabe-tags">Tags: Chemie, Energetik, Abitur, Berechnung</div>
-            <p>Aufgabe: Berechnen Sie die Verbrennungsenthalpie von Propan (C₃H₈) unter Verwendung der Standardbildungsenthalpien.</p>
-            <div id="solution7" class="solution-content">
-                <h3>Lösung:</h3>
-                <p>Die Verbrennungsenthalpie von Propan kann durch die Differenz der Bildungsenthalpien der Produkte und der Edukte berechnet werden. Sie beträgt -2219 kJ/mol.</p>
+        <div class="aufgabe-card" data-tags="chemie, struktur-eigenschaften, organik, abitur" onclick="toggleSolution('solution2')">
+            <div class="aufgabe-title">Zentralabitur 2022 Aufgabe II - Gussasphaltestrich</div>
+            <div class="aufgabe-tags">Tags: Chemie, Struktur-Eigenschaften, Organik, Abitur</div>
+            <div id="solution2" class="solution-content">
+                <p>Hier ist die Lösung und Erklärungen für die Aufgabe Gussasphaltestrich.</p>
             </div>
         </div>
 
-        <div class="aufgabe-card" data-tags="chemie, reaktionsenthalpie, abitur, berechnung" onclick="toggleSolution('solution8')">
-            <div class="aufgabe-title">Reaktionsenthalpie - Berechnung</div>
-            <div class="aufgabe-tags">Tags: Chemie, Reaktionsenthalpie, Abitur, Berechnung</div>
-            <p>Aufgabe: Berechnen Sie die Reaktionsenthalpie für die Neutralisation von Salzsäure (HCl) und Natronlauge (NaOH) im Wasser.</p>
-            <div id="solution8" class="solution-content">
-                <h3>Lösung:</h3>
-                <p>Die Reaktionsenthalpie der Neutralisation beträgt ca. -57 kJ/mol, was der Standardneutralisationsenthalpie für starke Säuren und Basen entspricht.</p>
+        <div class="aufgabe-card" data-tags="chemie, organik, polymerisation, abitur" onclick="toggleSolution('solution3')">
+            <div class="aufgabe-title">Zentralabitur 2023 Aufgabe I - Synthese von Polyvinylbutyral</div>
+            <div class="aufgabe-tags">Tags: Chemie, Organik, Polymerisation, Abitur</div>
+            <div id="solution3" class="solution-content">
+                <p>Hier ist die Lösung und Erklärungen für die Aufgabe Synthese von Polyvinylbutyral.</p>
             </div>
         </div>
-
-        <div class="aufgabe-card" data-tags="chemie, energetik, abitur, berechnung, aufgabe" onclick="toggleSolution('solution9')">
-            <div class="aufgabe-title">Energetik - Berechnung der spezifischen Wärmekapazität</div>
-            <div class="aufgabe-tags">Tags: Chemie, Energetik, Berechnung, Wärmekapazität, Abitur</div>
-            <p>Aufgabe: Berechnen Sie die spezifische Wärmekapazität eines Metalls, wenn 500 J benötigt werden, um 100 g des Metalls um 10 °C zu erwärmen.</p>
-            <div id="solution9" class="solution-content">
-                <h3>Lösung:</h3>
-                <p>Die spezifische Wärmekapazität (c) kann mit der Formel \(c = \frac{Q}{m \cdot \Delta T}\) berechnet werden. Hier beträgt c = 0,5 J/g°C.</p>
-            </div>
-        </div>
-
-        <!-- Function for Toggling Solutions -->
-        <script>
-            function toggleSolution(solutionId) {
-                const solution = document.getElementById(solutionId);
-                solution.style.display = solution.style.display === 'block' ? 'none' : 'block';
-            }
-
-            // Search function for filtering tasks
-            document.getElementById('search-bar').addEventListener('input', function() {
-                const searchTerm = this.value.toLowerCase();
-                const aufgaben = document.querySelectorAll('.aufgabe-card');
-
-                aufgaben.forEach(aufgabe => {
-                    const tags = aufgabe.getAttribute('data-tags');
-                    if (tags.toLowerCase().includes(searchTerm)) {
-                        aufgabe.style.display = 'block';
-                    } else {
-                        aufgabe.style.display = 'none';
-                    }
-                });
-            });
-        </script>
     </div>
+
+    <script>
+        // Function to toggle solution visibility
+        function toggleSolution(solutionId) {
+            const solution = document.getElementById(solutionId);
+            solution.style.display = solution.style.display === 'block' ? 'none' : 'block';
+        }
+
+        // Search function for filtering tasks
+        document.getElementById('search-bar').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const aufgaben = document.querySelectorAll('.aufgabe-card');
+
+            aufgaben.forEach(aufgabe => {
+                const tags = aufgabe.getAttribute('data-tags');
+                if (tags.toLowerCase().includes(searchTerm)) {
+                    aufgabe.style.display = 'block';
+                } else {
+                    aufgabe.style.display = 'none';
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>
