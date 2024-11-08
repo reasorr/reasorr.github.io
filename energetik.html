@@ -4,10 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Energetik - All Levels</title>
+    <title>Energetik - Alle Level</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap">
     <style>
-        /* General Styles */
+        /* Allgemeine Stile */
         * {
             margin: 0;
             padding: 0;
@@ -45,7 +45,7 @@
         }
 
         .lesson-content.visible {
-            max-height: 2000px; /* Allow more space for expanded content */
+            max-height: 4000px;
             opacity: 1;
             transform: scaleY(1);
         }
@@ -104,7 +104,7 @@
             transition: background-color 0.3s ease;
             display: inline-block;
             max-width: 100%;
-            white-space: normal; /* Allows text wrapping */
+            white-space: normal;
         }
 
         .answer-button.correct {
@@ -175,28 +175,18 @@
                 <div class="progress-bar-fill" style="width: 25%;"></div>
             </div>
             <h1>Level 1: Grundlagen der Thermodynamik</h1>
-            <p><b>Thermodynamik</b> ist das Studium von Energie und deren Umwandlungen. Es gibt drei wichtige Größen, die wir kennenlernen: die <b>Enthalpie (ΔH)</b>, die <b>Entropie (ΔS)</b>, und die <b>Gibbs-Energie (ΔG)</b>.</p>
-            <h2>Beispielaufgabe: Reaktionsenthalpie</h2>
-            <p>Stell dir vor, du hast eine Reaktion mit H₂ und O₂ zur Bildung von Wasser (H₂O):</p>
-            <pre>
-H₂ + ½ O₂ → H₂O    ΔH = -285,8 kJ/mol
-            </pre>
-            <p>Wenn du 2 mol Wasserstoff und 1 mol Sauerstoff verwendest, wie viel Energie wird insgesamt freigesetzt?</p>
-            <p><b>Antwort:</b> Die Reaktion bildet 2 mol H₂O, daher wird:</p>
-            <pre>
-2 mol * -285,8 kJ/mol = -571,6 kJ
-            </pre>
-            <p>freigesetzt.</p>
+            <p><b>Thermodynamik</b> ist das Studium der Energie und deren Umwandlungen. In der Chemie betrachten wir oft, wie Wärmeenergie bei chemischen Reaktionen freigesetzt oder aufgenommen wird. Die wichtigste Größe hier ist die <b>Enthalpie (ΔH)</b>, die beschreibt, wie sich die Energie bei einer Reaktion verändert.</p>
+            <h2>Beispiel: Wärmefreisetzung bei Verbrennung</h2>
+            <p>Stell dir vor, du verbrennst Holz im Kamin. Das Holz gibt Wärme ab und die Umgebung wird dadurch wärmer. Diese Energieänderung bei der Verbrennung ist ein exothermer Prozess, da Wärme abgegeben wird.</p>
 
             <!-- Quiz Section -->
             <div class="quiz">
                 <h2>Quiz</h2>
-                <p class="quiz-question">Ein Prozess hat ΔH = +200 kJ. Welche Aussage ist korrekt?</p>
+                <p class="quiz-question">Eine exotherme Reaktion gibt Wärme an die Umgebung ab. Was wäre ein Beispiel?</p>
                 <div class="answer-options">
-                    <button class="answer-button" data-correct="true" onclick="unlockLevel('level2')">Die Reaktion nimmt Wärme auf (endotherm).</button>
-                    <button class="answer-button" data-correct="false">Die Reaktion gibt Wärme ab (exotherm).</button>
+                    <button class="answer-button" data-correct="true" onclick="unlockLevel('level2')">Verbrennung von Holz</button>
+                    <button class="answer-button" data-correct="false">Schmelzen von Eis</button>
                 </div>
-                <p class="feedback" style="display: none;"></p>
             </div>
         </section>
 
@@ -206,21 +196,17 @@ H₂ + ½ O₂ → H₂O    ΔH = -285,8 kJ/mol
                 <div class="progress-bar-fill" style="width: 50%;"></div>
             </div>
             <h1>Level 2: Messmethoden und Kalorimetrie</h1>
-            <h2>Berechnung der Wärmeübertragung</h2>
-            <p>Wenn 150 g Wasser von 20 °C auf 80 °C erhitzt wird, wie viel Energie ist nötig? (c = 4,18 J/g·°C)</p>
-            <pre>
-q = m * c * ΔT = 150 g * 4,18 J/g·°C * (80 - 20) °C = 37620 J
-            </pre>
-            <p>Es werden 37620 J benötigt.</p>
+            <p><b>Kalorimetrie</b> ist die Methode, mit der wir die Wärme messen, die in chemischen Reaktionen freigesetzt oder aufgenommen wird. Ein <b>Kalorimeter</b> ist ein Gerät, das den Wärmeaustausch misst, ähnlich einer Thermosflasche, die den Wärmeverlust reduziert.</p>
+            <h2>Beispiel: Wärmekapazität von Wasser</h2>
+            <p>Wasser hat eine hohe Wärmekapazität, was bedeutet, dass es viel Energie braucht, um seine Temperatur zu erhöhen. Deshalb erwärmt sich Wasser in einem Topf langsamer als ein Metalltopf selbst.</p>
 
             <!-- Quiz Section -->
             <div class="quiz">
                 <h2>Quiz</h2>
-                <p class="quiz-question">Du hast ein 200-g-Metallstück (c = 0,9 J/g·°C), das von 25 °C auf 75 °C erhitzt wird. Wie viel Energie wird benötigt?</p>
+                <p class="quiz-question">Welcher Stoff hat eine höhere Wärmekapazität: Metall oder Wasser?</p>
                 <div class="answer-options">
-                    <button class="answer-button" data-correct="false">450 J</button>
-                    <button class="answer-button" data-correct="false">9000 J</button>
-                    <button class="answer-button" data-correct="true" onclick="unlockLevel('level3')">9000 J</button>
+                    <button class="answer-button" data-correct="true" onclick="unlockLevel('level3')">Wasser</button>
+                    <button class="answer-button" data-correct="false">Metall</button>
                 </div>
             </div>
         </section>
@@ -231,24 +217,17 @@ q = m * c * ΔT = 150 g * 4,18 J/g·°C * (80 - 20) °C = 37620 J
                 <div class="progress-bar-fill" style="width: 75%;"></div>
             </div>
             <h1>Level 3: Verbrennungsenthalpie und Standardbildungsenthalpie</h1>
-            <p>Berechne die Wärme, die bei der Verbrennung von 3 mol Methan (CH₄) freigesetzt wird, wenn:</p>
-            <pre>
-CH₄ + 2 O₂ → CO₂ + 2 H₂O    ΔH = -890,3 kJ/mol
-            </pre>
-            <p><b>Antwort:</b> Die Reaktion setzt:</p>
-            <pre>
-3 mol * -890,3 kJ/mol = -2670,9 kJ
-            </pre>
-            <p>frei.</p>
+            <p>Die <b>Verbrennungsenthalpie</b> beschreibt die Energie, die bei der Verbrennung eines Stoffes freigesetzt wird. Sie ist wichtig für die Nutzung von Brennstoffen wie Kohle, Öl oder Erdgas. Die <b>Standardbildungsenthalpie</b> ist die Energie, die bei der Bildung einer Verbindung aus ihren Elementen im Standardzustand benötigt wird.</p>
+            <h2>Beispiel: Methanverbrennung</h2>
+            <p>Wenn Methan (CH₄) verbrannt wird, gibt es eine große Menge Energie ab, die zum Kochen oder Heizen genutzt werden kann.</p>
 
             <!-- Quiz Section -->
             <div class="quiz">
                 <h2>Quiz</h2>
-                <p class="quiz-question">Wie viel Energie wird bei der Verbrennung von 5 mol CH₄ freigesetzt? (ΔH = -890,3 kJ/mol)</p>
+                <p class="quiz-question">Welche Art von Reaktion gibt Energie an die Umgebung ab?</p>
                 <div class="answer-options">
-                    <button class="answer-button" data-correct="false">1780,6 kJ</button>
-                    <button class="answer-button" data-correct="true" onclick="unlockLevel('level4')">-4451,5 kJ</button>
-                    <button class="answer-button" data-correct="false">-1780,6 kJ</button>
+                    <button class="answer-button" data-correct="true" onclick="unlockLevel('level4')">Verbrennungsreaktion</button>
+                    <button class="answer-button" data-correct="false">Kondensationsreaktion</button>
                 </div>
             </div>
         </section>
@@ -259,22 +238,17 @@ CH₄ + 2 O₂ → CO₂ + 2 H₂O    ΔH = -890,3 kJ/mol
                 <div class="progress-bar-fill" style="width: 100%;"></div>
             </div>
             <h1>Level 4: Phasenübergänge und Aggregatzustände</h1>
-            <h2>Beispielaufgabe: Verdampfungsenthalpie</h2>
-            <p>Berechne die Energie, um 250 g Wasser (M = 18 g/mol) zu verdampfen, wenn die Verdampfungsenthalpie 40,7 kJ/mol beträgt.</p>
-            <pre>
-n = m / M = 250 g / 18 g/mol = 13,89 mol
-q = n * ΔH = 13,89 mol * 40,7 kJ/mol = 565,2 kJ
-            </pre>
-            <p>Es werden 565,2 kJ benötigt.</p>
+            <p>Phasenübergänge sind Prozesse, bei denen ein Stoff von einem Aggregatzustand in einen anderen übergeht, z. B. von flüssig zu gasförmig (Verdampfen). Diese Übergänge erfordern Energie.</p>
+            <h2>Beispiel: Schmelzen von Eis</h2>
+            <p>Wenn ein Eiswürfel schmilzt, nimmt er Wärme auf, wodurch das Eis zu Wasser wird. Dieser Prozess ist endotherm, da Energie aufgenommen wird.</p>
 
             <!-- Quiz Section -->
             <div class="quiz">
                 <h2>Quiz</h2>
-                <p class="quiz-question">Berechne die Energie, um 150 g Wasser zu verdampfen. (M = 18 g/mol, ΔH = 40,7 kJ/mol)</p>
+                <p class="quiz-question">Welcher Prozess benötigt Energieaufnahme?</p>
                 <div class="answer-options">
-                    <button class="answer-button" data-correct="true" onclick="alert('Lesson Complete!')">339,2 kJ</button>
-                    <button class="answer-button" data-correct="false">4070 kJ</button>
-                    <button class="answer-button" data-correct="false">150 kJ</button>
+                    <button class="answer-button" data-correct="true" onclick="alert('Lesson Complete!')">Schmelzen von Eis</button>
+                    <button class="answer-button" data-correct="false">Gefrieren von Wasser</button>
                 </div>
             </div>
         </section>
