@@ -1,340 +1,209 @@
 <!DOCTYPE html>
-<html lang="de">
-
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="styles.css">
-    <title>Kurse - Chemify</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>Who Wants to Be a Millionaire? - ASCII Edition</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap');
 
         body {
-            background-color: #f9f9f9;
-            font-family: 'Open Sans', Arial, sans-serif;
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
-
-        .nav-container {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 20px;
-            background-color: #ffffff;
-            box-shadow: 0px 1px 10px rgba(0, 0, 0, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .nav-left {
-            display: flex;
-            align-items: center;
-            gap: 30px;
-        }
-
-        .hamburger {
-            display: none;
-            font-size: 1.5em;
-            cursor: pointer;
-        }
-
-        .nav-links {
-            display: flex;
-            list-style: none;
-            gap: 20px;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: #333;
-            font-weight: 700;
-            transition: color 0.3s ease;
-        }
-
-        .nav-links a:hover {
-            color: #39b54a;
-        }
-
-        .language-selector select {
-            background-color: #ffffff;
-            color: #333;
-            border: 1px solid #ccc;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .hero {
+            font-family: 'Source Code Pro', monospace;
+            background-color: black;
+            color: white;
             text-align: center;
-            padding: 60px 20px;
-            background-color: #ffffff;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .hero h1 {
-            font-size: 2.5em;
-            color: #333;
-            font-weight: bold;
-        }
-
-        .hero p {
-            font-size: 1.2em;
-            color: #555;
-            margin: 15px 0;
-        }
-
-        .course-button {
-            padding: 10px 20px;
-            background-color: #39b54a;
-            color: #ffffff;
-            border: none;
-            border-radius: 50px;
-            font-weight: bold;
-            cursor: pointer;
-            display: inline-block;
-            transition: background-color 0.3s ease;
-        }
-
-        .course-button:hover {
-            background-color: #2e8b47;
-        }
-
-        .learning-paths {
-            padding: 30px 15px;
-        }
-
-        .course-card {
-            background-color: #ffffff;
-            border-radius: 20px;
-            padding: 30px;
-            margin: 20px;
-            box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .course-card:hover {
-            transform: translateY(-10px);
-        }
-
-        .course-header h2 {
-            color: #000;
-            font-size: 1.8em;
-            font-weight: bold;
-        }
-
-        .course-levels {
+            margin: 0;
+            padding: 0;
             display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
+            flex-direction: row;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-container {
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            height: 100%;
+            padding: 20px;
+        }
+
+        #studio {
+            white-space: pre;
+            font-size: 20px;
+            line-height: 1.5;
+            text-align: center;
+            padding: 20px;
+            width: 100%;
+            flex: 0.2;
+        }
+
+        #quiz-container {
+            width: 80%;
+            flex: 0.8;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             justify-content: center;
         }
 
-        .level-card {
-            background-color: #ffffff;
-            padding: 20px;
-            border-radius: 20px;
+        .question {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-decoration: underline;
+            width: 100%;
             text-align: center;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-            width: 160px;
-            min-height: 130px;
-            overflow-wrap: break-word;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .level-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.15);
+        .option-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 100%;
         }
 
-        .level-title {
-            color: #39b54a;
-            font-weight: bold;
-            font-size: 1.3em;
-            margin-bottom: 5px;
+        .option {
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 20px;
+            cursor: pointer;
+            border: 2px solid white;
+            background-color: black;
+            color: white;
+            text-align: center;
+            transition: all 0.3s;
+            width: 100%;
+            height: 60px;
         }
 
-        .search-container {
-            position: relative;
+        .option:hover {
+            background-color: white;
+            color: black;
+        }
+
+        #money-ladder {
+            flex: 1;
+            padding: 20px;
+            text-align: left;
+            white-space: pre;
+            font-size: 18px;
+            border-left: 2px solid white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .lifelines {
             margin-top: 10px;
         }
 
-        .search-bar {
-            padding: 8px;
-            border-radius: 20px;
-            border: 1px solid #ccc;
-            width: 250px;
-        }
-
-        .search-button {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: #777;
+        .lifeline {
+            padding: 5px;
+            margin: 5px;
+            border: 1px solid white;
             cursor: pointer;
+            font-size: 14px;
+            background-color: black;
+            color: white;
         }
 
-        /* Responsive Styles */
-        @media (max-width: 768px) {
-            .nav-container {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
+        #speech-bubble {
+            display: none;
+            background-color: white;
+            color: black;
+            padding: 10px;
+            border-radius: 10px;
+            position: fixed; /* Changed from absolute to fixed */
+            top: 50%; /* Center vertically */
+            left: 50%; /* Center horizontally */
+            transform: translate(-50%, -50%); /* Center the bubble */
+            z-index: 1000; /* Ensure it's above other elements */
+            max-width: 300px; /* Limit width */
+            text-align: center;
+}
 
-            .nav-left {
-                width: 100%;
-                justify-content: space-between;
-            }
+        #audience-chart-container {
+            display: none;
+            width: 300px;
+            height: 200px;
+        }
 
-            .hamburger {
-                display: block;
-            }
+        .highlight {
+            background-color: white;
+            color: black;
+            font-weight: bold;
+        }
 
-            .nav-links {
-                display: none;
-                flex-direction: column;
-                gap: 10px;
-                width: 100%;
-            }
-
-            .nav-links.open {
-                display: flex;
-            }
-
-            .course-levels {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .hero h1 {
-                font-size: 2em;
-            }
-
-            .hero p {
-                font-size: 1em;
-            }
-
-            .course-card {
-                padding: 20px;
-            }
-
-            .level-card {
-                width: 100%;
-                min-height: auto;
-            }
-
-            .search-bar {
-                width: 200px;
-            }
-
-            /* Full-width button */
-            .course-button {
-                width: 100%;
-                text-align: center;
-            }
+        #timer {
+            font-size: 20px;
+            margin-bottom: 10px;
         }
     </style>
 </head>
-
 <body>
-    <!-- Navigationsleiste -->
-    <nav>
-        <div class="nav-container">
-            <div class="nav-left">
-                <img src="images/Chemify_Logo.png" alt="Chemify Logo" id="site-logo" style="height: 70px; width: auto;" loading="lazy">
-                <span class="hamburger" onclick="toggleMenu()">&#9776;</span>
-                <ul class="nav-links">
-                    <li><a href="index.html" id="nav-links-courses"><i class="fas fa-book"></i> Kurse</a></li>
-                    <li><a href="aufgaben.html" id="nav-links-aufgaben"><i class="fas fa-tasks"></i> Aufgaben</a></li>
-                </ul>
+    <div id="game-container">
+        <div id="studio">
+            <pre>
+        _________________________________
+       |                                 |
+       |    WELCOME TO THE STUDIO!      |
+       |    Who Wants to Be a Millionaire |
+       |_________________________________|
+              O   O   O   O   O   
+             /|\ /|\ /|\ /|\ /|\
+             / \ / \ / \ / \ / \
+            </pre>
+        </div>
+        <div id="quiz-container">
+            <h2>Prize: €<span id="prize">0</span></h2>
+            <p id="timer">Time left: 30s</p>
+            <div id="question-container">
+                <p class="question" id="question">Loading...</p>
+                <div class="option-box">
+                    <button class="option" onclick="checkAnswer(0)" id="opt0">Option A</button>
+                    <button class="option" onclick="checkAnswer(1)" id="opt1">Option B</button>
+                    <button class="option" onclick="checkAnswer(2)" id="opt2">Option C</button>
+                    <button class="option" onclick="checkAnswer(3)" id="opt3">Option D</button>
+                </div>
             </div>
-            <div class="nav-right">
-                <div class="language-selector">
-                    <select id="language-dropdown">
-                        <option value="en">🇬🇧 English</option>
-                        <option value="de">🇩🇪 Deutsch</option>
-                    </select>
-                </div>
-                <div class="search-container">
-                    <input type="text" id="search-bar" class="search-bar" placeholder="Suche...">
-                    <button class="search-button"><i class="fas fa-search"></i></button>
-                </div>
+            <div class="lifelines">
+                <button class="lifeline" onclick="useFiftyFifty()">50:50</button>
+                <button class="lifeline" onclick="phoneAFriend()">📞 Call Herr Hesse</button>
+                <button class="lifeline" onclick="askTheAudience()">👥 Ask the Audience</button>
+            </div>
+            <div id="speech-bubble"></div>
+            <div id="audience-chart-container">
+                <canvas id="audience-chart"></canvas>
             </div>
         </div>
-    </nav>
-
-    <!-- Hero-Bereich -->
-    <div class="hero">
-        <h1 id="courses-title">Kurse</h1>
-        <p id="courses-subtitle">Schritt-für-Schritt Pfade zur Meisterschaft</p>
     </div>
 
-    <!-- Kursbereich -->
-    <section class="learning-paths">
-        <!-- Organische Chemie -->
-        <div class="course-card">
-            <div class="course-header">
-                <h2 id="organic-chemistry-title">Organische Chemie</h2>
-                <p id="organic-chemistry-description">Meistere die essenziellen Problemlösungsfähigkeiten in der organischen Chemie</p>
-                <a href="lesson1.html" class="course-button">Fortsetzen</a>
-            </div>
-            <div class="course-levels">
-                <div class="level-card"><p id="level-1" class="level-title">Level 1</p><p>Einführung in die Organische Chemie</p></div>
-                <div class="level-card"><p id="level-2" class="level-title">Level 2</p><p>Kohlenwasserstoffe</p></div>
-                <div class="level-card"><p id="level-3" class="level-title">Level 3</p><p>Funktionelle Gruppen</p></div>
-                <div class="level-card"><p id="level-4" class="level-title">Level 4</p><p>Isomerie</p></div>
-                <div class="level-card"><p id="level-5" class="level-title">Level 5</p><p>Zwischenmolekulare Kräfte</p></div>
-            </div>
-        </div>
+    <div id="money-ladder">
+        <pre id="ladder-display">
+15 - 1,000,000
+14 -   500,000
+13 -   250,000
+12 -   125,000
+11 -    64,000
+10 -    32,000
+ 9 -    16,000
+ 8 -     8,000
+ 7 -     4,000
+ 6 -     2,000
+ 5 -     1,000
+ 4 -       500
+ 3 -       300
+ 2 -       200
+ 1 -       100
+        </pre>
+    </div>
 
-        <!-- Energetik -->
-        <div class="course-card">
-            <div class="course-header">
-                <h2 id="energetics-title">Energetik</h2>
-                <p id="energetics-description">Verstehe die Energieänderungen bei chemischen Reaktionen</p>
-                <a href="energetik.html" class="course-button">Fortsetzen</a>
-            </div>
-            <div class="course-levels">
-                <div class="level-card"><p id="energetics-level-1" class="level-title">Level 1</p><p>Grundlagen der Thermodynamik</p></div>
-                <div class="level-card"><p id="energetics-level-2" class="level-title">Level 2</p><p>Messung und Kalorimetrie</p></div>
-                <div class="level-card"><p id="energetics-level-3" class="level-title">Level 3</p><p>Verbrennung & Standardenthalpie</p></div>
-                <div class="level-card"><p id="energetics-level-4" class="level-title">Level 4</p><p>Phasenübergänge & Aggregatzustände</p></div>
-            </div>
-        </div>
-
-        <!-- Redoxreaktionen -->
-        <div class="course-card">
-            <div class="course-header">
-                <h2 id="redox-title">Redoxreaktionen</h2>
-                <p id="redox-description">Lerne Oxidation, Reduktion und Anwendungen</p>
-                <a href="lesson2.html" class="course-button">Fortsetzen</a>
-            </div>
-            <div class="course-levels">
-                <div class="level-card"><p id="redox-level-1" class="level-title">Level 1</p><p>Grundlagen der Oxidation und Reduktion</p></div>
-                <div class="level-card"><p id="redox-level-2" class="level-title">Level 2</p><p>Redoxgleichungen im Detail</p></div>
-                <div class="level-card"><p id="redox-level-3" class="level-title">Level 3</p><p>Galvanische Zellen & Elektrolyse</p></div>
-                <div class="level-card"><p id="redox-level-4" class="level-title">Level 4</p><p>Anwendungen von Redoxreaktionen</p></div>
-            </div>
-        </div>
-    </section>
-
-    <script>
-        // Toggle the mobile menu
-        function toggleMenu() {
-            document.querySelector('.nav-links').classList.toggle('open');
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
-
 </html>
