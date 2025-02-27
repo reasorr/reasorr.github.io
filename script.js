@@ -4,7 +4,7 @@ let currentQuestionIndex = 0;
 let prize = 0;
 let usedQuestions = [];
 let timer;
-let timeLeft = 30;
+let timeLeft = 120;
 
 // Hardcoded Questions (30 questions)
 const questions = [
@@ -796,7 +796,7 @@ function startTimer() {
 
 function resetTimer() {
     clearInterval(timer); // Clear the existing timer
-    timeLeft = 30; // Reset time to 30 seconds
+    timeLeft = 120; // Reset time to 30 seconds
     timerElement.innerText = `Time left: ${timeLeft}s`; // Update the timer display
     startTimer(); // Start the timer again
 }
