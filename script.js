@@ -946,7 +946,7 @@ function onWin(){
   const text=`
     <h2>Congratulations!</h2>
     <p>You answered all 15 questions!</p>
-    <p>You won €1,000,000!</p>
+    <p>You won 15 Abipunkte!</p>
     <button style="font-size:1.1rem; padding:10px; cursor:pointer;"
             onclick="startNewGame()">Play Again</button>
   `;
