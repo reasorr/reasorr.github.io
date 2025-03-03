@@ -27,9 +27,9 @@ let audienceChart = null;
 
 // The 15 rung ladder for million-dollar style
 const prizeLadder = [
-  100, 200, 300, 500, 1000,
-  2000, 4000, 8000, 16000, 32000,
-  64000, 125000, 250000, 500000, 1000000
+  01, 02, 03, 04, 05,
+  06, 07, 08, 09, 10,
+  11, 12, 13, 14, 15
 ];
 
 // Full question set
