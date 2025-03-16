@@ -91,12 +91,6 @@ const questions = [
     explanation: "She seeks absolution by writing a novel that reconstructs the truth, though she can’t truly fix the past."
   },
   {
-    question: "What does the title Atonement mean?",
-    options: ["A. Truth", "B. Reconciliation", "C. Deception", "D. Redemption"],
-    correctAnswer: 1,
-    explanation: "Atonement signifies a quest for reconciliation or moral reparation, which Briony desperately seeks."
-  },
-  {
     question: "What literary device is heavily used in Atonement?",
     options: ["A. Unreliable Narration", "B. Epistolary Format", "C. First-Person Narrative", "D. Omniscient Narration"],
     correctAnswer: 0,
