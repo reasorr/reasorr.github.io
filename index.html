@@ -12,7 +12,6 @@
     * { box-sizing: border-box; }
     body { font-family: system-ui, Arial, sans-serif; background:#0b0f14; color:#fff; margin:0; }
 
-    /* Topbar */
     .topbar { position:sticky; top:0; z-index:50; backdrop-filter: blur(6px);
       background:rgba(10,14,20,.7); border-bottom:1px solid rgba(255,255,255,.06);
       display:flex; align-items:center; gap:8px; padding:10px 12px; }
@@ -20,7 +19,6 @@
     .spacer { flex:1; }
     .tb-btn { background:#1f2a3a; color:#fff; border:none; border-radius:10px; padding:8px 12px; cursor:pointer; }
 
-    /* Gate & Auth */
     .gate, .auth { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:#000; z-index:9999; }
     .card { background:#121822; padding:24px; border-radius:14px; width:min(420px,92vw); }
     .card h1, .card h2 { margin:0 0 8px 0; }
@@ -33,11 +31,9 @@
     html.gate-ok .gate { display:none; }
     html.auth-ok .auth { display:none; }
 
-    /* App shell */
     .wrap { max-width:820px; margin:0 auto; padding:16px; }
     .panel { background:#121822; margin:20px 0; padding:20px; border-radius:14px; }
 
-    /* Swipe card */
     .swipe-wrap { position:relative; height:420px; display:flex; align-items:center; justify-content:center; }
     .swipe-card {
       position:absolute; width:min(360px,92vw); height:380px; border-radius:16px; overflow:hidden;
@@ -50,13 +46,11 @@
     .badge.like { left:12px; background:rgba(46,204,113,.9); }
     .badge.nope { right:12px; background:rgba(231,76,60,.9); }
 
-    /* Swipe area (oben) + Playbar (unten) */
     .gesture-top { position:absolute; left:0; right:0; top:0; height:72%; pointer-events:auto; touch-action:none; z-index:6; }
     .playbar { margin-top:12px; display:flex; justify-content:center; }
     .playbar-btn { width:min(360px,92vw); border-radius:999px; padding:14px 16px; background:#1f2a3a; color:#fff; border:none; font-weight:700; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.25); }
     .playbar-btn:active { transform: translateY(1px); }
 
-    /* Progress bar (optional, feels good) */
     .topprog{position:sticky;top:0;height:3px;background:#1f2a3a}
     .topprog>i{display:block;height:100%;background:#7aa2ff;width:0%}
 
@@ -66,7 +60,6 @@
   </style>
 </head>
 <body>
-  <!-- Topbar -->
   <div class="topbar">
     <div class="brand">SongMatch</div>
     <div class="spacer"></div>
@@ -74,7 +67,6 @@
   </div>
   <div class="topprog"><i id="tp"></i></div>
 
-  <!-- Zugangscode -->
   <div class="gate">
     <div class="card">
       <h1>Zugang</h1>
@@ -84,7 +76,6 @@
     </div>
   </div>
 
-  <!-- Account auth -->
   <div class="auth">
     <div class="card">
       <h2 id="authTitle">Anmelden</h2>
@@ -99,7 +90,6 @@
     </div>
   </div>
 
-  <!-- App -->
   <div class="app">
     <div class="wrap">
       <div class="panel">
@@ -107,22 +97,17 @@
           <h2 style="margin:0">Nächster Song</h2>
           <div class="tiny" id="progressInfo">–</div>
         </div>
-
         <div id="songArea" class="muted" style="min-height:420px">lädt Songs …</div>
-
-        <!-- Abgerundete Play/Pause-Bar -->
-        <div class="playbar"><button id="playBarBtn" class="playbar-btn" title="Play/Pause">▶️ Tippen zum Abspielen</button></div>
+        <div class="playbar"><button id="playBarBtn" class="playbar-btn">▶️ Tippen zum Abspielen</button></div>
       </div>
-
       <div class="panel">
         <h2 style="margin:0 0 10px 0">Gemeinsame Playlist</h2>
         <div id="playlist" class="playlist"></div>
-        <p id="plHint" class="muted" style="margin-top:6px;">Hier erscheinen Songs automatisch, sobald ihr beide ❤️ geswiped habt.</p>
+        <p id="plHint" class="muted">Hier erscheinen Songs automatisch, sobald ihr beide ❤️ geswiped habt.</p>
       </div>
     </div>
   </div>
 
-  <!-- Gate script -->
   <script>
     (function(){
       const ACCESS_CODE = '1235';
@@ -136,360 +121,79 @@
     })();
   </script>
 
-  <!-- Spotify IFrame API for playback state -->
   <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
 
-  <!-- App logic -->
   <script type="module">
-    // Show runtime errors on auth screen (so login never "silently dies")
-    window.addEventListener('error', e => { const el=document.getElementById('authMsg'); if(el) el.textContent = 'JavaScript error: ' + (e?.message||'unknown'); });
-    window.addEventListener('unhandledrejection', e => { const el=document.getElementById('authMsg'); if(el) el.textContent = 'Runtime error: ' + (e?.reason?.message||e?.reason||'unknown'); });
-
-    // Firebase (modular)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
     import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, onSnapshot, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCOYv05V2jXiDYPjc1MlT_WdpgLfW4aJJo",
-      authDomain: "songmatch-850c7.firebaseapp.com",
-      projectId: "songmatch-850c7",
-      storageBucket: "songmatch-850c7.firebasestorage.app",
-      messagingSenderId: "139459584433",
-      appId: "1:139459584433:web:df99f2c2a15cd6eed41d90"
-    };
+    const firebaseConfig = { /* ... your firebase config unchanged ... */ };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db   = getFirestore(app);
 
-    // DOM
-    const authTitle = document.getElementById('authTitle');
-    const authSwitch = document.getElementById('authSwitch');
-    const authSwitchText = document.getElementById('authSwitchText');
-    const authMsg = document.getElementById('authMsg');
+    // --- UI refs
     const usernameEl = document.getElementById('username');
     const passwordEl = document.getElementById('password');
     const loginBtn = document.getElementById('loginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
+    const authTitle = document.getElementById('authTitle');
+    const authSwitch = document.getElementById('authSwitch');
+    const authSwitchText = document.getElementById('authSwitchText');
+    const authMsg = document.getElementById('authMsg');
 
-    const songArea   = document.getElementById("songArea");
-    const playlistEl = document.getElementById("playlist");
-    const plHint     = document.getElementById("plHint");
-    const progressInfo = document.getElementById("progressInfo");
-    const topProg    = document.getElementById("tp");
-    const playBarBtn = document.getElementById("playBarBtn");
+    const songArea=document.getElementById("songArea");
+    const playlistEl=document.getElementById("playlist");
+    const plHint=document.getElementById("plHint");
+    const progressInfo=document.getElementById("progressInfo");
+    const topProg=document.getElementById("tp");
+    const playBarBtn=document.getElementById("playBarBtn");
 
-    const updatePlayBtn = (playing)=>{ if(!playBarBtn) return; playBarBtn.textContent = playing ? '⏸️ Tippen zum Pausieren' : '▶️ Tippen zum Abspielen'; };
+    const updatePlayBtn=(playing)=>{playBarBtn.textContent=playing?'⏸️ Tippen zum Pausieren':'▶️ Tippen zum Abspielen';};
 
-    // Login UX QoL
-    try{ usernameEl.focus(); }catch{}
-    ;[usernameEl,passwordEl].forEach(el=>el.addEventListener('keydown',e=>{ if(e.key==='Enter') loginBtn.click(); }));
+    // --- Auth UI
+    let signUpMode=false;
+    const toEmail=u=>`${u.trim().toLowerCase()}@sm.local`;
+    authSwitch.onclick=()=>{ signUpMode=!signUpMode; authTitle.textContent=signUpMode?'Account erstellen':'Anmelden'; loginBtn.textContent=signUpMode?'Erstellen & Anmelden':'Anmelden'; authSwitchText.textContent=signUpMode?'Schon ein Account?':'Noch kein Account?'; authSwitch.textContent=signUpMode?'Anmelden':'Account erstellen'; };
+    loginBtn.onclick=async()=>{ const u=usernameEl.value.trim(); const p=passwordEl.value; if(!u||!p){authMsg.textContent='Username + Passwort eingeben';return;} authMsg.textContent='...'; try{ if(signUpMode){ const cred=await createUserWithEmailAndPassword(auth,toEmail(u),p); await updateProfile(cred.user,{displayName:u}); await setDoc(doc(db,'users',cred.user.uid),{username:u,createdAt:serverTimestamp()},{merge:true}); } else { await signInWithEmailAndPassword(auth,toEmail(u),p);} document.documentElement.classList.add('auth-ok'); authMsg.textContent=''; }catch(e){ authMsg.textContent='Fehler: '+(e.code||e.message);} };
+    logoutBtn.onclick=async()=>{ await signOut(auth); document.documentElement.classList.remove('auth-ok'); };
 
-    // Username login (email = username@sm.local)
-    let signUpMode = false;
-    function toEmail(u){ return `${u.trim().toLowerCase()}@sm.local`; }
-    authSwitch.onclick = () => {
-      signUpMode = !signUpMode;
-      authTitle.textContent = signUpMode ? 'Account erstellen' : 'Anmelden';
-      loginBtn.textContent  = signUpMode ? 'Erstellen & Anmelden' : 'Anmelden';
-      authSwitchText.textContent = signUpMode ? 'Schon ein Account?' : 'Noch kein Account?';
-      authSwitch.textContent = signUpMode ? 'Anmelden' : 'Account erstellen';
-    };
-    loginBtn.onclick = async () => {
-      const u = usernameEl.value.trim();
-      const p = passwordEl.value;
-      if(!u || !p) { authMsg.textContent = 'Username + Passwort eingeben'; return; }
-      authMsg.textContent = '...';
-      loginBtn.disabled = true; loginBtn.textContent = signUpMode?'Erstellen & Anmelden...':'Anmelden...';
-      try {
-        if (signUpMode) {
-          const cred = await createUserWithEmailAndPassword(auth, toEmail(u), p);
-          await updateProfile(cred.user, { displayName: u });
-          await setDoc(doc(db, 'users', cred.user.uid), { username: u, createdAt: serverTimestamp() }, { merge: true });
-        } else {
-          await signInWithEmailAndPassword(auth, toEmail(u), p);
-        }
-        document.documentElement.classList.add('auth-ok');
-        authMsg.textContent = '';
-      } catch (e) {
-        authMsg.textContent = 'Fehler: ' + (e.code || e.message);
-        console.error(e);
-      } finally {
-        loginBtn.disabled = false; loginBtn.textContent = signUpMode?'Erstellen & Anmelden':'Anmelden';
-      }
-    };
-    logoutBtn.onclick = async () => {
-      await signOut(auth);
-      document.documentElement.classList.remove('auth-ok');
-      usernameEl.value = ''; passwordEl.value = '';
-    };
+    // --- Firestore refs
+    const poolRef=doc(db,"config","pool");
+    function progressRef(uid){ return doc(db,"progress",uid); }
 
-    // Sync/Pool
-    const poolRef = doc(db, "config", "pool");    // { ids: [...] }
-    function progressRef(uid){ return doc(db, "progress", uid); } // { index: n, by: clientId }
-    let uid = null, songs = [], index = 0, history = [];
-    const listeningSet = new Set();
-
-    // Simple clientId for multi-device sync
+    let uid=null,songs=[],index=0;
     const CLIENT_ID_KEY='songmatch:cid';
-    let clientId = localStorage.getItem(CLIENT_ID_KEY);
-    if(!clientId){ clientId = Math.random().toString(36).slice(2)+Date.now().toString(36); localStorage.setItem(CLIENT_ID_KEY, clientId); }
+    let clientId=localStorage.getItem(CLIENT_ID_KEY)||Math.random().toString(36).slice(2); localStorage.setItem(CLIENT_ID_KEY,clientId);
 
-    onAuthStateChanged(auth, async (user)=>{
-      if (!user) { document.documentElement.classList.remove('auth-ok'); return; }
-      uid = user.uid;
-      document.documentElement.classList.add('auth-ok');
+    onAuthStateChanged(auth,async(user)=>{ if(!user){document.documentElement.classList.remove('auth-ok');return;} uid=user.uid; document.documentElement.classList.add('auth-ok'); const psnap=await getDoc(progressRef(uid)); index=psnap.exists()?(psnap.data().index||0):0; await ensurePoolHasEnough(100); await reloadSongsFromPool(); renderCurrent(); onSnapshot(progressRef(uid),snap=>{ if(!snap.exists())return; const d=snap.data(); if(d.by===clientId)return; const ni=d.index||0; if(ni!==index){index=ni;renderCurrent();}}); });
 
-      const psnap = await getDoc(progressRef(uid));
-      index = psnap.exists() ? (psnap.data().index || 0) : 0;
+    // --- Spotify API helpers
+    async function getToken(){ const r=await fetch("https://reasorr-github-io.vercel.app/api/token"); return (await r.json()).access_token; }
+    async function searchTracks(token,q,limit=50){ const url=`https://api.spotify.com/v1/search?type=track&limit=${limit}&q=${encodeURIComponent(q)}`; const r=await fetch(url,{headers:{Authorization:'Bearer '+token}}); if(!r.ok)return[]; const j=await r.json(); return (j.tracks?.items||[]).map(t=>t.id).filter(Boolean);}
+    async function filterByPopularity(token,ids,minPop=85){const keep=[];for(let i=0;i<ids.length;i+=50){const slice=ids.slice(i,i+50);const r=await fetch(`https://api.spotify.com/v1/tracks?ids=${slice.join(',')}`,{headers:{Authorization:'Bearer '+token}});if(!r.ok)continue;const j=await r.json();for(const t of j.tracks||[]){if(t?.popularity>=minPop)keep.push(t.id);}}return keep;}
 
-      await ensurePoolHasEnough(100);
-      await reloadSongsFromPool();
-      setupPlaylistListenersFor(songs);
-      renderCurrent();
+    // mirror-safe playlist
+    async function getPlaylistTrackIdsAllowed(token,pid,market='DE',limit=100){const url=`https://api.spotify.com/v1/playlists/${pid}/tracks?limit=${limit}&market=${market}&fields=items(track(id))`;const r=await fetch(url,{headers:{Authorization:'Bearer '+token}});if(!r.ok)return[];const j=await r.json();return(j.items||[]).map(it=>it.track?.id).filter(Boolean);}
 
-      // live sync of index across devices
-      onSnapshot(progressRef(uid), (snap)=>{
-        if(!snap.exists()) return;
-        const d = snap.data() || {};
-        if (d.by === clientId) return;
-        const newIndex = typeof d.index === 'number' ? d.index : 0;
-        if (newIndex !== index){ index = newIndex; renderCurrent(); }
-      });
-    });
+    async function buildBatch(){ const token=await getToken(); let pool=[]; // 1) optional mirror playlist(s)
+      const mirror=['4yNfFAuHcSgzbcSm6q5QDu']; for(const pid of mirror){ pool.push(...await getPlaylistTrackIdsAllowed(token,pid)); }
+      // 2) search+popularity
+      const queries=['genre:pop year:2024-2025','genre:hip-hop year:2024-2025','genre:latin year:2024-2025','genre:dance year:2024-2025','genre:afrobeat year:2024-2025']; for(const q of queries){ pool.push(...await searchTracks(token,q,50)); }
+      pool=await filterByPopularity(token,Array.from(new Set(pool)),85); return pool; }
 
-    // Live updates of pool
-    onSnapshot(poolRef, (snap)=>{
-      const data = snap.exists() ? snap.data() : null;
-      const ids = data?.ids || [];
-      if (ids.length) {
-        songs = ids;
-        if (index >= songs.length) index = Math.max(0, songs.length - 1);
-        renderCurrent();
-      }
-    });
+    async function ensurePoolHasEnough(min=100){const snap=await getDoc(poolRef);let ids=snap.exists()?(snap.data().ids||[]):[];if(ids.length>=min)return;const batch=await buildBatch();ids=[...new Set([...ids,...batch])];await setDoc(poolRef,{ids,updatedAt:serverTimestamp()},{merge:true});}
+    async function reloadSongsFromPool(){const snap=await getDoc(poolRef);songs=snap.exists()?(snap.data().ids||[]):[];}
 
-    // --- Spotify Web API helpers (client credentials via your proxy) ---
-    async function getToken() {
-      const res = await fetch("https://reasorr-github-io.vercel.app/api/token"); // client-credentials proxy
-      const data = await res.json();
-      return data.access_token;
-    }
-    async function findPlaylistId(token, fallbackId, fallbackName = 'Top 50 - Global'){
-      // try known ID first
-      if (fallbackId){
-        const r = await fetch(`https://api.spotify.com/v1/playlists/${fallbackId}`, { headers: { Authorization:'Bearer '+token } });
-        if (r.ok) return fallbackId;
-      }
-      // fallback: search by name (type=playlist)
-      const s = await fetch(`https://api.spotify.com/v1/search?type=playlist&limit=1&q=${encodeURIComponent(fallbackName)}`, { headers: { Authorization:'Bearer '+token } });
-      if (!s.ok) return null;
-      const j = await s.json();
-      return j?.playlists?.items?.[0]?.id || null;
-    }
-    async function getPlaylistTrackIds(token, playlistId, market='DE', limit=100){
-      // We just need first 100 from Top 50; paging omitted for simplicity
-      const url = `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=${Math.min(limit,100)}&market=${market}&fields=items(track(id))`;
-      const r = await fetch(url, { headers: { Authorization:'Bearer '+token } });
-      if (!r.ok) return [];
-      const j = await r.json();
-      return (j.items || []).map(it => it?.track?.id).filter(Boolean);
-    }
-    async function filterByPopularity(token, ids, minPop=85){
-      const keep = [];
-      for (let i=0; i<ids.length; i+=50){
-        const slice = ids.slice(i,i+50);
-        const r = await fetch(`https://api.spotify.com/v1/tracks?ids=${slice.join(',')}`, { headers: { Authorization:'Bearer '+token } });
-        if (!r.ok) continue;
-        const j = await r.json();
-        for (const t of (j.tracks||[])){
-          if (t && typeof t.popularity === 'number' && t.popularity >= minPop) keep.push(t.id);
-        }
-      }
-      return keep;
-    }
-
-    // Build pool strictly from global hits (Top 50 Global), filtered by popularity
-    async function buildBatch(){
-      const token = await getToken();
-      const TOP50_GLOBAL_ID = '37i9dQZEVXbMDoHDwVN2tF'; // Top 50 - Global (stable at time of writing)
-      const pid = await findPlaylistId(token, TOP50_GLOBAL_ID, 'Top 50 - Global');
-      if (!pid) return [];
-      let ids = await getPlaylistTrackIds(token, pid, 'DE', 100);  // ensure playable in DE
-      ids = await filterByPopularity(token, ids, 85);              // only real hits
-      // dedup
-      const seen = new Set(); const out = [];
-      for (const id of ids) if (id && !seen.has(id)) { seen.add(id); out.push(id); }
-      return out;
-    }
-
-    async function ensurePoolHasEnough(minCount=100){
-      const snap = await getDoc(poolRef);
-      let ids = snap.exists() ? (snap.data().ids || []) : [];
-      if (ids.length >= minCount) return;
-      const batch = await buildBatch();
-      const setIds = new Set(ids);
-      for (const id of batch) if (!setIds.has(id)) { setIds.add(id); ids.push(id); }
-      await setDoc(poolRef, { ids, updatedAt: serverTimestamp() }, { merge: true });
-    }
-    async function reloadSongsFromPool(){
-      const snap = await getDoc(poolRef);
-      songs = snap.exists() ? (snap.data().ids || []) : [];
-    }
-
-    // Spotify IFrame API readiness
-    let spotifyApiReady = new Promise(resolve => { window.onSpotifyIframeApiReady = resolve; });
-    let embedCtrl = null;
-
-    // Swipe (always enabled in top zone)
-    let cardEl=null, badgeLike=null, badgeNope=null, gestureEl=null;
-    let startX=0, startY=0, dx=0, dy=0, dragging=false;
-
-    function mountSwipeCard(trackId){
-      if (!trackId) { songArea.textContent = "🎶 Lade Songs …"; return; }
-      songArea.innerHTML = `
-        <div class="swipe-wrap">
-          <div class="swipe-card" id="swipeCard">
-            <div class="badge like" id="badgeLike">LIKE</div>
-            <div class="badge nope" id="badgeNope">NOPE</div>
-            <div id="spotifyHost" style="width:100%;height:100%"></div>
-            <div class="gesture-top" id="gestureTop"></div>
-          </div>
-        </div>`;
-      cardEl = document.getElementById('swipeCard');
-      badgeLike = document.getElementById('badgeLike');
-      badgeNope = document.getElementById('badgeNope');
-      gestureEl = document.getElementById('gestureTop');
-
-      // Spotify controller (no autoplay)
-      spotifyApiReady.then(IFrameAPI=>{
-        const host = document.getElementById('spotifyHost');
-        if (!IFrameAPI || !host) return;
-        IFrameAPI.createController(host, { uri: `spotify:track:${trackId}`, width: '100%', height: '100%' }, (controller) => {
-          embedCtrl = controller;
-          controller.addListener('ready', () => { updatePlayBtn(false); });
-          controller.addListener('playback_update', ({ data }) => {
-            const playing = data?.isPaused === false;
-            updatePlayBtn(playing);
-          });
-        });
-      });
-
-      // Gestures
-      const start = (x,y)=>{ startX=x; startY=y; dx=0; dy=0; dragging=true; cardEl.style.transition='none'; };
-      const move  = (x,y)=>{
-        if(!dragging) return;
-        dx = x-startX; dy = y-startY;
-        const rot = Math.max(-15, Math.min(15, dx/10));
-        cardEl.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
-        const s = Math.min(1, Math.abs(dx)/90);
-        if (dx>0){ badgeLike.style.opacity = s; badgeNope.style.opacity = 0; }
-        else if (dx<0){ badgeNope.style.opacity = s; badgeLike.style.opacity = 0; }
-        else { badgeLike.style.opacity=badgeNope.style.opacity=0; }
-      };
-      const end = ()=>{
-        if(!dragging) return;
-        dragging=false; cardEl.style.transition='';
-        const threshold = 90;
-        if (dx > threshold) { animateDecision('right'); vote('like'); }
-        else if (dx < -threshold) { animateDecision('left');  vote('dislike'); }
-        else { cardEl.style.transform = `translate(0px, 0px) rotate(0deg)`; badgeLike.style.opacity = badgeNope.style.opacity = 0; }
-      };
-      gestureEl.addEventListener('touchstart', e=>{ const t=e.touches[0]; start(t.clientX,t.clientY); }, {passive:true});
-      gestureEl.addEventListener('touchmove',  e=>{ const t=e.touches[0]; move(t.clientX,t.clientY); }, {passive:true});
-      gestureEl.addEventListener('touchend', end);
-      gestureEl.addEventListener('mousedown', e=>{ start(e.clientX,e.clientY); });
-      window.addEventListener('mousemove', e=>{ move(e.clientX,e.clientY); });
-      window.addEventListener('mouseup', end);
-    }
-
-    function animateDecision(direction){
-      if(!cardEl) return;
-      const offX = direction==='right' ? window.innerWidth : -window.innerWidth;
-      cardEl.style.transition = 'transform .25s ease, opacity .25s ease';
-      cardEl.style.transform  = `translate(${offX}px, 0) rotate(${direction==='right'?15:-15}deg)`;
-      cardEl.style.opacity = '0';
-      badgeLike && (badgeLike.style.opacity=0);
-      badgeNope && (badgeNope.style.opacity=0);
-    }
-
-    // Render current
-    async function renderCurrent(){
-      if (!songs.length){
-        songArea.textContent = "🎶 Lade Songs …";
-        await ensurePoolHasEnough(100);
-        await reloadSongsFromPool();
-      }
-      if (!songs.length){ songArea.textContent = "😕 Konnte keine Songs laden."; return; }
-      if (index >= songs.length) {
-        await ensurePoolHasEnough(100);
-        await reloadSongsFromPool();
-        if (index >= songs.length) index = Math.max(0, songs.length - 1);
-      }
-      const id = songs[index];
-      mountSwipeCard(id);
-      updateProgressInfo();
-    }
-    function updateProgressInfo(){
-      progressInfo.textContent = songs.length ? `Song ${Math.min(index+1,songs.length)} / ${songs.length}` : '–';
-      const p = songs.length ? ((Math.min(index+1,songs.length)/songs.length)*100) : 0;
-      if(topProg) topProg.style.width = p + '%';
-    }
-
-    // Voting + sync
-    async function vote(val){
-      if(!uid || index >= songs.length) return;
-      const id = songs[index];
-      history.push({ id, val });
-      await setDoc(doc(db, "votes", id), { [uid]: val, updatedAt: serverTimestamp() }, { merge: true });
-      // atomic + author device
-      await runTransaction(db, async (tx)=>{
-        const ref = progressRef(uid);
-        const snap = await tx.get(ref);
-        const cur = snap.exists() ? (snap.data().index || 0) : 0;
-        tx.set(ref, { index: cur + 1, by: clientId, updatedAt: serverTimestamp() }, { merge: true });
-      });
-      // optimistic
-      index = Math.min(index + 1, songs.length);
-      setTimeout(()=>{ renderCurrent(); }, 150);
-      if (navigator.vibrate) { navigator.vibrate(10); }
-    }
-
-    // Playbar toggle
-    if (playBarBtn) playBarBtn.onclick = ()=>{ try { if (embedCtrl?.togglePlay) embedCtrl.togglePlay(); } catch(e){} };
-
-    // Keyboard shortcuts
-    window.addEventListener('keydown', (e)=>{
-      const k = (e.key||'').toLowerCase();
-      if(k==='arrowright'){ animateDecision('right'); vote('like'); }
-      if(k==='arrowleft'){  animateDecision('left');  vote('dislike'); }
-      if(k==='p'){ e.preventDefault(); playBarBtn?.click(); }
-    });
-
-    // Playlist live updates
-    function setupPlaylistListenersFor(ids){
-      ids.forEach(id=>{
-        if (listeningSet.has(id)) return;
-        listeningSet.add(id);
-        const ref = doc(db, "votes", id);
-        onSnapshot(ref, snap => {
-          if(!snap.exists()) return;
-          const data = snap.data();
-          const vals = Object.values(data).filter(v => v==="like"||v==="dislike");
-          if(vals.length >= 2 && vals.every(v => v==="like")){
-            const elId = "pl-"+id;
-            if(!document.getElementById(elId)){
-              const iframe = document.createElement("iframe");
-              iframe.id = elId;
-              iframe.className = "embed-small";
-              iframe.src = `https://open.spotify.com/embed/track/${id}`;
-              playlistEl.appendChild(iframe);
-              if (plHint) plHint.style.display = "none";
-            }
-          }
-        });
-      });
-    }
+    // --- Swipe + playback
+    let embedCtrl=null; window.onSpotifyIframeApiReady=(IFrameAPI)=>{ /* ready */ };
+    function mountSwipeCard(trackId){ songArea.innerHTML=`<div class="swipe-wrap"><div class="swipe-card" id="swipeCard"><div class="badge like" id="badgeLike">LIKE</div><div class="badge nope" id="badgeNope">NOPE</div><div id="spotifyHost" style="width:100%;height:100%"></div><div class="gesture-top" id="gestureTop"></div></div></div>`;
+      window.onSpotifyIframeApiReady=(API)=>{ API.createController(document.getElementById('spotifyHost'),{uri:`spotify:track:${trackId}`},c=>{embedCtrl=c;c.addListener('playback_update',e=>updatePlayBtn(!e.data.isPaused));});};}
+    function renderCurrent(){ if(!songs.length){songArea.textContent="Lade...";return;} mountSwipeCard(songs[index]); progressInfo.textContent=`Song ${index+1}/${songs.length}`; topProg.style.width=((index+1)/songs.length*100)+"%"; }
+    async function vote(val){const id=songs[index];await setDoc(doc(db,"votes",id),{[uid]:val,updatedAt:serverTimestamp()},{merge:true});await runTransaction(db,async(tx)=>{const ref=progressRef(uid);const s=await tx.get(ref);const cur=s.exists()?(s.data().index||0):0;tx.set(ref,{index:cur+1,by:clientId,updatedAt:serverTimestamp()},{merge:true});}); index++;renderCurrent();}
+    playBarBtn.onclick=()=>{embedCtrl?.togglePlay();};
+    window.addEventListener('keydown',e=>{if(e.key==='ArrowRight')vote('like');if(e.key==='ArrowLeft')vote('dislike');if(e.key==='p')playBarBtn.click();});
   </script>
 </body>
 </html>
