@@ -175,6 +175,14 @@
     const authSwitch = document.getElementById('authSwitch');
     const authSwitchText = document.getElementById('authSwitchText');
     const authMsg = document.getElementById('authMsg');
+
+    // Surface JS errors to the auth screen to avoid silent failures blocking login
+    window.addEventListener('error', (e)=>{
+      try { authMsg.textContent = 'JavaScript error: ' + (e?.message||'unknown'); } catch(_) {}
+    });
+    window.addEventListener('unhandledrejection', (e)=>{
+      try { authMsg.textContent = 'Runtime error: ' + (e?.reason?.message || e?.reason || 'unknown'); } catch(_) {}
+    });
     const usernameEl = document.getElementById('username');
     const passwordEl = document.getElementById('password');
     const loginBtn = document.getElementById('loginBtn');
@@ -194,7 +202,7 @@
     if (playBarBtn) playBarBtn.onclick = ()=>{ try { if (embedCtrl?.togglePlay) embedCtrl.togglePlay(); } catch(e){} };
 
     // keine weiteren Buttons – Swipe only
-    setButtons && setButtons(true);
+    
 
     // --- Username login (email = username@sm.local) ---
     let signUpMode = false;
