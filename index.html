@@ -135,12 +135,12 @@
     }
 
     // Spotify Integration
-    async function getToken() {
-      // 👉 hier deine echte Vercel-URL einsetzen!
-      const res = await fetch("https://reasorr-github-io.vercel.app/);
-      const data = await res.json();
-      return data.access_token;
-    }
+   async function getToken() {
+  const res = await fetch("https://reasorr-github-io.vercel.app/api/token");
+  const data = await res.json();
+  return data.access_token;
+}
+
 
     async function loadSongs() {
       const token = await getToken();
