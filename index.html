@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SongMatch – Tinder zu zweit für Songs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --card: #121822;
+      --muted: #9fb0c3;
+      --text: #e8f0fa;
+      --accent: #7aa2ff;
+      --ok: #2ecc71;
+      --no: #ff6b6b;
+      --warning: #f39c12;
+      --shadow: 0 10px 30px rgba(0,0,0,0.35);
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 24px; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text); background: radial-gradient(1200px 600px at 20% -10%, rgba(122,162,255,0.15), transparent),
+               radial-gradient(800px 500px at 90% 10%, rgba(46,213,115,0.12), transparent),
+               var(--bg);
+    }
+    .app { max-width: 1100px; margin: 0 auto; }
+    header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+    .logo { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, var(--accent), #9d7aff); box-shadow: var(--shadow); }
+    h1 { font-size: 24px; margin: 0; letter-spacing: 0.2px; }
+    .sub { color: var(--muted); font-size: 14px; }
+
+    .grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+
+    .card { background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)); border: 1px solid rgba(255,255,255,0.07);
+      border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .card h2 { margin: 0; padding: 18px 18px 0; font-size: 18px; }
+    .card .body { padding: 18px; }
+
+    .row { display: flex; gap: 12px; align-items: center; }
+    .row.wrap { flex-wrap: wrap; }
+    .row + .row { margin-top: 10px; }
+
+    input, textarea, button, select {
+      border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.06); color: var(--text);
+      padding: 12px 14px; font-size: 14px; outline: none;
+    }
+    input::placeholder, textarea::placeholder { color: #96a3b5; }
+    textarea { width: 100%; min-height: 100px; resize: vertical; }
+    label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px; }
+
+    .btn { cursor: pointer; border: 0; font-weight: 600; letter-spacing: 0.2px; }
+    .btn.primary { background: linear-gradient(135deg, var(--accent), #9d7aff); color: white; }
+    .btn.ghost { background: transparent; border: 1px solid rgba(255,255,255,0.15); }
+    .btn.ok { background: var(--ok); color: #0b2414; }
+    .btn.no { background: var(--no); color: #3a0a0a; }
+    .btn.warn { background: var(--warning); color: #221a09; }
+
+    .pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); font-size: 12px; color: var(--muted); }
+
+    .flex { display: flex; gap: 12px; align-items: center; }
+    .space { flex: 1; }
+    .center { text-align: center; }
+    .muted { color: var(--muted); }
+    .divider { height: 1px; background: rgba(255,255,255,0.08); margin: 14px 0; }
+
+    .embed { border: 0; width: 100%; border-radius: 14px; overflow: hidden; background: #111; }
+    .playlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+    .badge { font-size: 12px; color: #0e2117; background: #2ecc71; padding: 4px 8px; border-radius: 10px; font-weight: 700; display: inline-block; }
+
+    .hint { font-size: 12px; color: var(--muted); }
+    .foot-note { font-size: 12px; color: var(--muted); margin-top: 10px; }
+
+    .kbd { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); padding: 3px 6px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="logo"></div>
+      <div>
+        <h1>SongMatch <span class="sub">· „Tinder zu zweit“ für Songs</span></h1>
+        <div class="sub">Teile eine PIN, stimmt gemeinsam ab – landet nur bei <strong>beiden Ja</strong> in der Playlist.</div>
+      </div>
+      <div class="space"></div>
+      <div id="status" class="pill">Nicht verbunden</div>
+    </header>
+
+    <!-- JOIN / ROOM -->
+    <div class="card" id="joinCard">
+      <h2>Raum beitreten</h2>
+      <div class="body">
+        <div class="row wrap">
+          <div style="flex:1; min-width:220px;">
+            <label>Dein Name</label>
+            <input id="displayName" placeholder="z. B. Tobias" />
+          </div>
+          <div style="flex:1; min-width:220px;">
+            <label>PIN (gemeinsames „Passwort”)</label>
+            <input id="roomPin" placeholder="z. B. 1235" />
+          </div>
+          <button id="joinBtn" class="btn primary">Beitreten</button>
+        </div>
+        <div class="foot-note">Hinweis: Die PIN dient nur als <em>Raumkennung</em> und ist nicht wirklich sicher. Für echte Sicherheit bitte richtige Auth nutzen.</div>
+      </div>
+    </div>
+
+    <div class="grid" id="appGrid" style="display:none;">
+      <!-- LEFT: SWIPE -->
+      <div class="card">
+        <h2>Abstimmen</h2>
+        <div class="body">
+          <div class="row">
+            <div id="roomBadge" class="pill">PIN: –</div>
+            <div id="meBadge" class="pill">Du: –</div>
+            <div class="space"></div>
+            <button id="nextBtn" class="btn ghost">⟲ Nächster Song</button>
+          </div>
+          <div class="divider"></div>
+          <div id="swipeArea">
+            <p class="muted">Füge erst Songs im rechten Bereich hinzu oder nutze bereits vorhandene im Pool.</p>
+          </div>
+          <div class="divider"></div>
+          <div class="row center">
+            <div class="space"></div>
+            <button id="noBtn" class="btn no" style="min-width:140px;">✕ Nein</button>
+            <button id="yesBtn" class="btn ok" style="min-width:140px;">❤ Ja</button>
+            <div class="space"></div>
+          </div>
+          <div class="hint center" id="voteHint" style="margin-top:8px;">Wähle Ja/Nein – bei 2× Ja wandert der Titel in die Playlist.</div>
+        </div>
+      </div>
+
+      <!-- RIGHT: ADD + PLAYLIST -->
+      <div class="card">
+        <h2>Song-Pool & Playlist</h2>
+        <div class="body">
+          <label>Spotify-Track-Link hinzufügen</label>
+          <div class="row">
+            <input id="songUrl" placeholder="https://open.spotify.com/track/..." style="flex:1;" />
+            <button id="addBtn" class="btn primary">Hinzufügen</button>
+          </div>
+          <div class="hint">Mehrere auf einmal? Pro Zeile einen Link unten einfügen:</div>
+          <textarea id="bulk" placeholder="Spotify-Links – je Zeile ein Track"></textarea>
+          <div class="row"><button id="bulkBtn" class="btn ghost">Alle hinzufügen</button><div class="space"></div>
+            <button id="clearPoolBtn" class="btn warn" title="Nur nicht angenommene löschen">Pool leeren</button>
+          </div>
+
+          <div class="divider"></div>
+          <h3 style="margin:0 0 8px;">Playlist (2× ❤)</h3>
+          <div id="playlist" class="playlist"></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="foot-note">🎧 Tipp: Spotify-Links brauchen keine API – die Einbettung kommt direkt von Spotify. YouTube wird hier nicht unterstützt (kannst du aber leicht ergänzen).</p>
+  </div>
+
+  <!-- Firebase SDKs (replace version if needed) -->
+  <script type="module">
+    // ---- 1) Firebase SETUP --------------------------------------------------
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+    import { getFirestore, collection, doc, setDoc, addDoc, getDoc, getDocs, query, where, orderBy, limit, onSnapshot, serverTimestamp, updateDoc, runTransaction, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+
+    // TODO: 🔧 Trage hier DEINE Firebase-Konfiguration ein (Projekt > Web-App anlegen)
+    const firebaseConfig = {
+      apiKey: "REPLACE_ME",
+      authDomain: "REPLACE_ME.firebaseapp.com",
+      projectId: "REPLACE_ME",
+      storageBucket: "REPLACE_ME.appspot.com",
+      messagingSenderId: "REPLACE_ME",
+      appId: "REPLACE_ME"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // ---- 2) DOM REFS --------------------------------------------------------
+    const joinCard = document.getElementById('joinCard');
+    const appGrid  = document.getElementById('appGrid');
+    const displayNameEl = document.getElementById('displayName');
+    const roomPinEl = document.getElementById('roomPin');
+    const joinBtn = document.getElementById('joinBtn');
+    const statusEl = document.getElementById('status');
+    const roomBadge = document.getElementById('roomBadge');
+    const meBadge = document.getElementById('meBadge');
+    const swipeArea = document.getElementById('swipeArea');
+    const yesBtn = document.getElementById('yesBtn');
+    const noBtn = document.getElementById('noBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const songUrlEl = document.getElementById('songUrl');
+    const addBtn = document.getElementById('addBtn');
+    const bulkEl = document.getElementById('bulk');
+    const bulkBtn = document.getElementById('bulkBtn');
+    const playlistEl = document.getElementById('playlist');
+    const clearPoolBtn = document.getElementById('clearPoolBtn');
+
+    // ---- 3) STATE -----------------------------------------------------------
+    let uid = null;
+    let meName = null;
+    let roomPin = null;
+
+    let currentSongDocRef = null; // Firestore doc ref we are currently showing
+    let unsubscribeSongListener = null;
+    let unsubscribePlaylist = null;
+
+    // ---- 4) HELPERS ---------------------------------------------------------
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+    function setStatus(text, ok=false) {
+      statusEl.textContent = text;
+      statusEl.style.background = ok ? 'rgba(46, 204, 113, 0.15)' : 'rgba(255,255,255,0.06)';
+      statusEl.style.borderColor = ok ? 'rgba(46, 204, 113, 0.4)' : 'rgba(255,255,255,0.08)';
+    }
+
+    function saveLocal() {
+      localStorage.setItem('songmatch:name', meName || '');
+      localStorage.setItem('songmatch:pin', roomPin || '');
+    }
+
+    function restoreLocal() {
+      const n = localStorage.getItem('songmatch:name');
+      const p = localStorage.getItem('songmatch:pin');
+      if (n) displayNameEl.value = n;
+      if (p) roomPinEl.value = p;
+    }
+
+    function parseSpotifyLink(url) {
+      try {
+        const u = new URL(url.trim());
+        if (!u.hostname.includes('spotify.com')) return null;
+        const parts = u.pathname.split('/').filter(Boolean);
+        if (parts[0] !== 'track' || !parts[1]) return null;
+        return { type: 'spotify-track', id: parts[1], url: url.trim() };
+      } catch { return null; }
+    }
+
+    function spotifyIframe(id) {
+      const iframe = document.createElement('iframe');
+      iframe.className = 'embed';
+      iframe.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
+      iframe.loading = 'lazy';
+      iframe.height = 152;
+      iframe.src = `https://open.spotify.com/embed/track/${id}?utm_source=generator`;
+      return iframe;
+    }
+
+    function songCard(song) {
+      const wrap = document.createElement('div');
+      wrap.innerHTML = `<div class="muted" style="margin-bottom:10px;">Nächster Kandidat</div>`;
+      wrap.appendChild(spotifyIframe(song.id));
+      return wrap;
+    }
+
+    function playlistCard(song) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const body = document.createElement('div');
+      body.className = 'body';
+      const top = document.createElement('div');
+      top.className = 'row';
+      const badge = document.createElement('span');
+      badge.className = 'badge';
+      badge.textContent = 'In Playlist';
+      top.appendChild(badge);
+      body.appendChild(top);
+      body.appendChild(spotifyIframe(song.id));
+      card.appendChild(body);
+      return card;
+    }
+
+    function collectionPath(path) {
+      return collection(db, path);
+    }
+
+    // ---- 5) AUTH & JOIN -----------------------------------------------------
+    restoreLocal();
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        uid = user.uid;
+        setStatus('Verbunden', true);
+      } else {
+        setStatus('Nicht verbunden');
+      }
+    });
+
+    signInAnonymously(auth).catch(console.error);
+
+    joinBtn.addEventListener('click', async () => {
+      meName = (displayNameEl.value || '').trim();
+      roomPin = (roomPinEl.value || '').trim();
+      if (!meName || !roomPin) { alert('Bitte Name und PIN eingeben.'); return; }
+      saveLocal();
+
+      // create room doc if missing
+      const roomRef = doc(db, 'rooms', roomPin);
+      const snap = await getDoc(roomRef);
+      if (!snap.exists()) {
+        await setDoc(roomRef, { createdAt: serverTimestamp(), createdBy: meName });
+      }
+
+      roomBadge.textContent = `PIN: ${roomPin}`;
+      meBadge.textContent = `Du: ${meName}`;
+      joinCard.style.display = 'none';
+      appGrid.style.display = '';
+
+      // start listeners
+      listenPlaylist();
+      await loadNextSong();
+    });
+
+    // ---- 6) ADD SONG(S) -----------------------------------------------------
+    async function addSong(url) {
+      const parsed = parseSpotifyLink(url);
+      if (!parsed) return false;
+      const poolRef = collectionPath(`rooms/${roomPin}/pool`);
+
+      // de-dup by id within the room
+      const q = query(poolRef, where('id', '==', parsed.id), limit(1));
+      const exists = await getDocs(q);
+      if (!exists.empty) return true; // silently ignore dupes
+
+      await addDoc(poolRef, {
+        ...parsed,
+        addedAt: serverTimestamp(),
+        addedBy: meName || 'anon',
+        resolved: false,
+        accepted: false,
+        votes: {},
+      });
+      return true;
+    }
+
+    addBtn.addEventListener('click', async () => {
+      const url = songUrlEl.value.trim();
+      if (!url) return;
+      const ok = await addSong(url);
+      if (!ok) alert('Konnte den Link nicht erkennen. Bitte einen Spotify-Track-Link verwenden.');
+      songUrlEl.value = '';
+      await loadNextSong(true);
+    });
+
+    bulkBtn.addEventListener('click', async () => {
+      const lines = (bulkEl.value || '').split(/\n+/).map(s => s.trim()).filter(Boolean);
+      let added = 0; let bad = 0;
+      for (const line of lines) {
+        const ok = await addSong(line);
+        ok ? added++ : bad++;
+        await sleep(50);
+      }
+      if (bad) alert(`${added} hinzugefügt, ${bad} übersprungen (ungültig oder Duplikat).`);
+      else alert(`${added} hinzugefügt.`);
+      await loadNextSong(true);
+    });
+
+    clearPoolBtn.addEventListener('click', async () => {
+      if (!confirm('Nur NICHT angenommene Kandidaten im Pool löschen?')) return;
+      const poolRef = collectionPath(`rooms/${roomPin}/pool`);
+      const q = query(poolRef, where('accepted', '==', false));
+      const res = await getDocs(q);
+      for (const d of res.docs) { await deleteDoc(d.ref); }
+      await loadNextSong(true);
+    });
+
+    // ---- 7) PICK NEXT SONG --------------------------------------------------
+    async function loadNextSong(force=false) {
+      // remove previous listener
+      if (unsubscribeSongListener) { unsubscribeSongListener(); unsubscribeSongListener = null; }
+      currentSongDocRef = null;
+
+      // fetch unresolved songs, prefer ones I haven't voted on yet
+      const poolRef = collectionPath(`rooms/${roomPin}/pool`);
+      const q1 = query(poolRef, where('resolved', '==', false), orderBy('addedAt', 'asc'), limit(20));
+      const snap = await getDocs(q1);
+      const candidates = snap.docs.map(d => ({ id: d.id, ...d.data(), _ref: d.ref }))
+        .filter(s => !s.votes || !s.votes[uid]);
+
+      const pool = candidates.length ? candidates : snap.docs.map(d => ({ id: d.id, ...d.data(), _ref: d.ref }));
+
+      if (!pool.length) {
+        swipeArea.innerHTML = '<p class="muted">Kein unverhandelter Titel im Pool. Füge rechts neue Songs hinzu!</p>';
+        return;
+      }
+
+      const next = pool[0]; // simple: oldest first
+      currentSongDocRef = next._ref;
+      swipeArea.innerHTML = '';
+      swipeArea.appendChild(songCard(next));
+
+      // live-listen to this song for vote resolution
+      unsubscribeSongListener = onSnapshot(currentSongDocRef, async (docSnap) => {
+        const data = docSnap.data();
+        if (!data) return;
+        const votes = data.votes || {};
+        const voters = Object.keys(votes);
+        const allYes = voters.length >= 2 && voters.every(k => votes[k] === 'yes');
+        const decided = voters.length >= 2;
+        if (decided && !data.resolved) {
+          try {
+            await runTransaction(db, async (tx) => {
+              const fresh = await tx.get(currentSongDocRef);
+              const d = fresh.data();
+              if (!d || d.resolved) return;
+              const vv = d.votes || {};
+              const V = Object.keys(vv);
+              const AY = V.length >= 2 && V.every(k => vv[k] === 'yes');
+              tx.update(currentSongDocRef, { resolved: true, accepted: AY });
+              if (AY) {
+                const plRef = collectionPath(`rooms/${roomPin}/playlist`);
+                tx.set(doc(plRef), { ...d, addedToPlaylistAt: serverTimestamp(), agreedBy: V });
+              }
+            });
+          } catch (e) { console.warn('tx failed', e); }
+        }
+        if (decided) {
+          await sleep(300);
+          await loadNextSong(true);
+        }
+      });
+    }
+
+    nextBtn.addEventListener('click', () => loadNextSong(true));
+
+    // ---- 8) VOTING ----------------------------------------------------------
+    async function vote(val) {
+      if (!currentSongDocRef) return;
+      await updateDoc(currentSongDocRef, { [`votes.${uid}`]: val });
+    }
+    yesBtn.addEventListener('click', () => vote('yes'));
+    noBtn.addEventListener('click', () => vote('no'));
+
+    // ---- 9) PLAYLIST LISTENER ----------------------------------------------
+    function listenPlaylist() {
+      if (unsubscribePlaylist) { unsubscribePlaylist(); unsubscribePlaylist = null; }
+      const plRef = collectionPath(`rooms/${roomPin}/playlist`);
+      unsubscribePlaylist = onSnapshot(query(plRef, orderBy('addedToPlaylistAt', 'desc')), (snap) => {
+        playlistEl.innerHTML = '';
+        if (snap.empty) {
+          playlistEl.innerHTML = '<div class="muted">Noch nichts in der Playlist – stimmt euch ab! ❤</div>';
+          return;
+        }
+        snap.forEach(d => {
+          const s = d.data();
+          playlistEl.appendChild(playlistCard(s));
+        });
+      });
+    }
+
+    // ---- 10) UX niceties ----------------------------------------------------
+    document.addEventListener('keydown', (e) => {
+      if (e.target && ['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
+      if (e.key === 'ArrowLeft') noBtn.click();
+      if (e.key === 'ArrowRight' || e.key === ' ') yesBtn.click();
+      if (e.key.toLowerCase() === 'n') nextBtn.click();
+    });
+
+  </script>
+
+  <!--
+  ============================== FIRESTORE RULES (Beispiel) ==============================
+  In der Firebase-Konsole unter Firestore > Regeln einfügen (für einen schnellen Test –
+  nicht „production-safe“, aber ausreichend für PIN-basierte, private Nutzung unter Freunden)
+
+  rules_version = '2';
+  service cloud.firestore {
+    match /databases/{database}/documents {
+      // Erlaube Lese/Schreibzugriff auf alle Räume
+      match /rooms/{room} {
+        allow read, write: if true; // ⚠️ Offen – für privat ok, öffentlich ungeeignet!
+        match /{document=**} {
+          allow read, write: if true;
+        }
+      }
+    }
+  }
+
+  ➕ Besser (optional): Nur aus DEINER Domain zulassen, und/oder Auth voraussetzen.
+  ========================================================================================
+  -->
+</body>
+</html>
