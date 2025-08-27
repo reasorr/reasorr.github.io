@@ -62,14 +62,14 @@
     })();
   </script>
 
-  <!-- Firebase -->
+  <!-- Firebase + Spotify Logik -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
     import { getFirestore, doc, setDoc, onSnapshot, serverTimestamp } 
       from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
-    // 🔑 Deine Firebase Config einsetzen
+    // 🔑 Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyCOYv05V2jXiDYPjc1MlT_WdpgLfW4aJJo",
       authDomain: "songmatch-850c7.firebaseapp.com",
@@ -84,24 +84,16 @@
     const db = getFirestore(app);
     signInAnonymously(auth).catch(console.error);
 
-    // --- feste Songliste ---
-    const songs = [
-      "4uLU6hMCjMI75M1A2tKUQC", // Eminem - Without Me
-      "3n3Ppam7vgaVa1iaRUc9Lp", // Red Hot Chili Peppers - Californication
-      "6habFhsOp2NvshLv26DqMb", // Ed Sheeran - Shape of You
-      "0e7ipj03S05BNilyu5bRzt", // Dua Lipa - Levitating
-      "7qiZfU4dY1lWllzX7mPBI3"  // Ed Sheeran - Perfect
-    ];
-
-    let index = 0;
     let uid = null;
-
     auth.onAuthStateChanged(user => { if(user) uid = user.uid; });
 
     const songArea = document.getElementById("songArea");
     const likeBtn = document.getElementById("likeBtn");
     const dislikeBtn = document.getElementById("dislikeBtn");
     const playlistEl = document.getElementById("playlist");
+
+    let songs = [];
+    let index = 0;
 
     function showSong(i){
       if(i>=songs.length){ 
@@ -114,12 +106,10 @@
 
     // Vote speichern + lokal weiterschalten
     async function vote(val){
+      if(!uid){ alert("Noch nicht verbunden, bitte kurz warten!"); return; }
       const id = songs[index];
       const ref = doc(db, "votes", id);
-
       await setDoc(ref, { [uid]: val, updatedAt: serverTimestamp() }, { merge: true });
-
-      // lokaler Wechsel zum nächsten Song
       index++;
       showSong(index);
     }
@@ -128,22 +118,58 @@
     dislikeBtn.onclick = () => vote("dislike");
 
     // Playlist Listener (gemeinsam)
-    songs.forEach(id => {
-      const ref = doc(db, "votes", id);
-      onSnapshot(ref, snap => {
-        if(!snap.exists()) return;
-        const data = snap.data();
-        const vals = Object.values(data).filter(v => v==="like"||v==="dislike");
-        if(vals.length >= 2 && vals.every(v => v==="like")){
-          if(!document.getElementById("pl-"+id)){
-            playlistEl.innerHTML += `<iframe id="pl-${id}" src="https://open.spotify.com/embed/track/${id}" width="300" height="80"></iframe>`;
+    function setupPlaylistListener(ids){
+      ids.forEach(id => {
+        const ref = doc(db, "votes", id);
+        onSnapshot(ref, snap => {
+          if(!snap.exists()) return;
+          const data = snap.data();
+          const vals = Object.values(data).filter(v => v==="like"||v==="dislike");
+          if(vals.length >= 2 && vals.every(v => v==="like")){
+            if(!document.getElementById("pl-"+id)){
+              playlistEl.innerHTML += `<iframe id="pl-${id}" src="https://open.spotify.com/embed/track/${id}" width="300" height="80"></iframe>`;
+            }
           }
-        }
+        });
       });
-    });
+    }
+
+    // Spotify Integration
+    async function getToken() {
+      // 👉 hier deine echte Vercel-URL einsetzen!
+      const res = await fetch("https://reasorr-github-io.vercel.app/);
+      const data = await res.json();
+      return data.access_token;
+    }
+
+    async function loadSongs() {
+      const token = await getToken();
+
+      const playlists = [
+        "37i9dQZEVXbMDoHDwVN2tF", // Top 50 Global
+        "37i9dQZEVXbLiRSasKsNU9"  // Viral 50 Global
+      ];
+
+      let allSongs = [];
+
+      for (const pid of playlists) {
+        const res = await fetch(`https://api.spotify.com/v1/playlists/${pid}/tracks`, {
+          headers: { "Authorization": "Bearer " + token }
+        });
+        const data = await res.json();
+        const ids = data.items.map(item => item.track.id);
+        allSongs = allSongs.concat(ids);
+      }
+
+      return allSongs;
+    }
 
     // Start
-    showSong(index);
+    loadSongs().then(list => {
+      songs = list;
+      setupPlaylistListener(songs);
+      showSong(index);
+    });
   </script>
 </body>
 </html>
