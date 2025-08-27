@@ -313,9 +313,7 @@
 
     function setSwipeMode(on){
       swipeEnabled = on;
-      // Buttons nur aktiv, wenn swipen erlaubt (Musik läuft)
-      setButtons(on);
-      // Iframe-PointerEvents: Wenn kein Swipe → Interaktion (Play) erlauben
+      // Swipe-Gesten nur erlauben, wenn Musik läuft – Buttons bleiben IMMER aktiv
       const frame = cardEl?.querySelector('iframe');
       if (frame) frame.style.pointerEvents = on ? 'none' : 'auto';
       const hint = document.getElementById('swipeHint');
@@ -330,7 +328,7 @@
             <div class="badge like" id="badgeLike">LIKE</div>
             <div class="badge nope" id="badgeNope">NOPE</div>
             <div id="spotifyHost" style="width:100%;height:100%"></div>
-            <div id="swipeHint" class="tiny" style="position:absolute;bottom:10px;left:0;right:0;text-align:center;opacity:.85">▶️ Spiele den Song ab, dann kannst du swipen</div>
+            <div id="swipeHint" class="tiny" style="position:absolute;bottom:10px;left:0;right:0;text-align:center;opacity:.85">▶️ Spiele den Song ab, dann kannst du swipen – die Buttons funktionieren trotzdem</div>
           </div>
         </div>`;
       cardEl = document.getElementById("swipeCard");
@@ -348,8 +346,9 @@
         IFrameAPI.createController(host, { uri: `spotify:track:${trackId}`, width: '100%', height: '100%' }, (controller) => {
           embedCtrl = controller;
           controller.addListener('ready', () => {
-            // sobald bereit: warten auf Play
+            // sobald bereit: warten auf Play – wir versuchen einmalig Autoplay
             setSwipeMode(false);
+            try { controller.togglePlay && controller.togglePlay(); } catch(e) { /* Autoplay kann vom Browser blockiert werden */ }
           });
           controller.addListener('playback_update', ({ data }) => {
             // aktivieren, wenn nicht pausiert
@@ -397,7 +396,7 @@
           interacting = false;
           const frame = cardEl?.querySelector('iframe');
           if(frame && swipeEnabled) frame.style.pointerEvents = 'none';
-          setButtons(swipeEnabled);
+          setButtons(true);
           return;
         }
         cardEl.style.transition='';
@@ -407,7 +406,7 @@
         else {
           cardEl.style.transform = `translate(0px, 0px) rotate(0deg)`;
           badgeLike.style.opacity = badgeNope.style.opacity = 0;
-          setButtons(swipeEnabled);
+          setButtons(true);
         }
       };
 
@@ -465,11 +464,10 @@
       setTimeout(()=>{ renderCurrent(); }, 150);
       if (navigator.vibrate) { navigator.vibrate(10); }
     }
-    likeBtn.onclick = ()=>{ if(!swipeEnabled) return; animateDecision('right'); vote('like'); };
-    nopeBtn.onclick = ()=>{ if(!swipeEnabled) return; animateDecision('left');  vote('dislike'); };
-    skipBtn.onclick = ()=>{ if(!swipeEnabled) return; index = Math.min(index + 1, songs.length); setDoc(progressRef(uid), { index, updatedAt: serverTimestamp() }, { merge:true }); renderCurrent(); };
+    likeBtn.onclick = ()=>{ animateDecision('right'); vote('like'); };
+    nopeBtn.onclick = ()=>{ animateDecision('left');  vote('dislike'); };
+    skipBtn.onclick = ()=>{ index = Math.min(index + 1, songs.length); setDoc(progressRef(uid), { index, updatedAt: serverTimestamp() }, { merge:true }); renderCurrent(); };
     undoBtn.onclick = async ()=>{
-      if(!swipeEnabled) return;
       const last = history.pop(); if(!last) return;
       index = Math.max(index - 1, 0);
       await setDoc(progressRef(uid), { index, updatedAt: serverTimestamp() }, { merge: true });
