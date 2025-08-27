@@ -81,7 +81,7 @@
     import { getFirestore, doc, setDoc, onSnapshot, serverTimestamp }
       from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
-    // 🔑 Firebase Config
+    // 🔑 Firebase Config (dein Projekt)
     const firebaseConfig = {
       apiKey: "AIzaSyCOYv05V2jXiDYPjc1MlT_WdpgLfW4aJJo",
       authDomain: "songmatch-850c7.firebaseapp.com",
@@ -109,7 +109,7 @@
     // State
     let songs = [];        // queue of track IDs
     let index = 0;
-    const likedSeeds = []; // recent liked tracks → to improve recs
+    const likedSeeds = []; // keep last few liked tracks (optional future use)
 
     // UI helpers
     function setVotingEnabled(on) {
@@ -178,62 +178,47 @@
       return data.access_token;
     }
 
-    // ---- Spotify loaders ----
-
-    // A) Recommendations (kann bei neuen/dev Apps gelegentlich gesperrt sein → wir fangen das ab)
-    async function fetchRecommendations(token, { seedGenres = [], seedTracks = [] } = {}) {
-      const genres = seedGenres.length ? seedGenres : ["pop","dance","rock","indie"];
-      const params = new URLSearchParams({ limit: "50", market: "DE" });
-      if (genres.length) params.set("seed_genres", genres.slice(0,5).join(","));
-      if (seedTracks.length) params.set("seed_tracks", seedTracks.slice(0,5).join(","));
-
-      const url = `https://api.spotify.com/v1/recommendations?${params.toString()}`;
-      const res = await fetch(url, { headers: { "Authorization": "Bearer " + token }});
-      if (!res.ok) {
-        console.warn("Recommendations HTTP", res.status);
-        return [];
-      }
+    // ---- Spotify SEARCH loader (works with client-credentials) ----
+    async function searchTracks(token, query, limit=50) {
+      // randomize offset a bit to avoid always the same results
+      const offset = Math.floor(Math.random() * 10) * 50; // 0..450
+      const url = `https://api.spotify.com/v1/search?type=track&limit=${limit}&offset=${offset}&market=DE&q=${encodeURIComponent(query)}`;
+      const res = await fetch(url, { headers: { "Authorization": "Bearer " + token } });
+      if (!res.ok) { console.warn("Search HTTP", res.status, query); return []; }
       const data = await res.json();
-      return (data.tracks || []).map(t => t.id).filter(Boolean);
+      return (data.tracks?.items || []).map(t => t.id).filter(Boolean);
     }
 
-    // B) Search fallback (funktioniert mit Client Credentials)
-    async function fetchBySearch(token) {
-      const headers = { "Authorization": "Bearer " + token };
-      const queries = [
-        'genre:pop year:2022-2025',
-        'genre:dance year:2022-2025',
-        'genre:rock year:2020-2025',
-        'genre:indie year:2020-2025',
-        'genre:hip-hop year:2020-2025'
-      ];
-      let ids = [];
-      for (const q of queries) {
-        const url = `https://api.spotify.com/v1/search?type=track&limit=50&market=DE&q=${encodeURIComponent(q)}`;
-        const res = await fetch(url, { headers });
-        if (!res.ok) { console.warn("Search HTTP", res.status, q); continue; }
-        const data = await res.json();
-        const chunk = (data.tracks?.items || []).map(t => t.id).filter(Boolean);
-        ids = ids.concat(chunk);
-      }
-      return ids;
-    }
-
-    // Queue auffüllen (dedupe + mischen), zuerst Recs, dann Search
+    // Queue auffüllen (nur Search; no editorial/algorithmic/recommendations)
     async function topUpSongs(){
       const token = await getToken();
-      let pool = await fetchRecommendations(token, { seedTracks: likedSeeds });
-      if (pool.length === 0) {
-        pool = await fetchBySearch(token);
+
+      // Broad queries (use simple words + year filter = supported)
+      const queries = [
+        'pop year:2022-2025',
+        'hip hop year:2022-2025',
+        'dance year:2021-2025',
+        'rock year:2019-2025',
+        'indie year:2019-2025',
+        'house year:2020-2025',
+        'r&b year:2020-2025'
+      ];
+
+      let pool = [];
+      for (const q of queries) {
+        const ids = await searchTracks(token, q, 50);
+        pool = pool.concat(ids);
       }
+
+      // Deduplicate + shuffle
       const set = new Set(songs);
       const fresh = [];
       for (const id of pool) if (!set.has(id)) { set.add(id); fresh.push(id); }
-      // Shuffle
       for (let i = fresh.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [fresh[i], fresh[j]] = [fresh[j], fresh[i]];
       }
+
       if (fresh.length) {
         songs = songs.concat(fresh);
         setupPlaylistListener(fresh);
