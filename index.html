@@ -9,9 +9,9 @@
     * { box-sizing: border-box; }
     body { font-family: system-ui, Arial, sans-serif; background:#0b0f14; color:#fff; margin:0; }
 
-    /* ---- Topbar ---- */
+    /* Topbar */
     .topbar {
-      position:sticky; top:0; z-index:50; backdrop-filter: blur(6px);
+      position:sticky; top:0; z-index:40; backdrop-filter: blur(6px);
       background:rgba(10,14,20,.7); border-bottom:1px solid rgba(255,255,255,.06);
       display:flex; align-items:center; gap:8px; padding:10px 12px;
     }
@@ -19,7 +19,7 @@
     .spacer { flex:1; }
     .tb-btn { background:#1f2a3a; color:#fff; border:none; border-radius:10px; padding:8px 12px; cursor:pointer; }
 
-    /* ---- Gate (code) & Auth ---- */
+    /* Gates & Auth */
     .gate, .auth { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:#000; z-index:9999; }
     .card { background:#121822; padding:24px; border-radius:14px; width:min(420px,92vw); }
     .card h1, .card h2 { margin:0 0 8px 0; }
@@ -31,21 +31,31 @@
     html.gate-ok .gate { display:none; }
     html.auth-ok .auth { display:none; }
 
-    /* ---- App shell ---- */
+    /* App shell */
     .wrap { max-width:820px; margin:0 auto; padding:16px; }
     .panel { background:#121822; margin:20px 0; padding:20px; border-radius:14px; }
 
-    /* ---- Swipe card ---- */
-    .swipe-wrap { position:relative; height:420px; display:flex; align-items:center; justify-content:center; touch-action:pan-y; }
+    /* Swipe card */
+    .swipe-wrap { position:relative; height:460px; display:flex; align-items:center; justify-content:center; touch-action:pan-y; }
     .swipe-card {
-      position:absolute; width:min(360px,92vw); height:380px; border-radius:16px; overflow:hidden;
+      position:absolute; width:min(360px,92vw); height:420px; border-radius:16px; overflow:hidden;
       box-shadow:0 10px 30px rgba(0,0,0,.35); background:#0f1520;
-      transition: transform .25s ease, opacity .25s ease;
-      touch-action: none; /* wir steuern Gesten selbst */
-      animation: popin .25s ease;
+      transition: transform .25s ease, opacity .25s ease; touch-action: none; animation: popin .25s ease;
+      display:flex; flex-direction:column; justify-content:space-between;
     }
     @keyframes popin { from{ transform:scale(.96); opacity:.0 } to{ transform:scale(1); opacity:1 } }
-    .swipe-card iframe { width:100%; height:100%; border:0; display:block; } /* pointerEvents steuern wir dynamisch */
+
+    .cover { position:relative; height:78%; display:flex; align-items:center; justify-content:center; background:#0b0f14; }
+    .cover img { max-width:100%; max-height:100%; display:block; }
+    .playbtn {
+      position:absolute; bottom:12px; left:50%; transform:translateX(-50%);
+      background:#1f2a3a; border:none; color:#fff; border-radius:999px; padding:10px 16px; cursor:pointer; font-weight:800;
+    }
+    .meta { height:22%; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .title { font-weight:700; font-size:14px; }
+    .artist { font-size:12px; opacity:.8; }
+    .open { background:#1f2a3a; border:none; color:#fff; border-radius:10px; padding:8px 12px; cursor:pointer; }
+
     .badge { position:absolute; top:12px; padding:6px 10px; border-radius:8px; font-weight:800; letter-spacing:.5px; opacity:0; transition:opacity .12s ease; pointer-events:none; }
     .badge.like { left:12px; background:rgba(46,204,113,.9); }
     .badge.nope { right:12px; background:rgba(231,76,60,.9); }
@@ -68,6 +78,7 @@
   <div class="topbar">
     <div class="brand">SongMatch</div>
     <div class="spacer"></div>
+    <button id="inviteBtn" class="tb-btn">🔗 Invite kopieren</button>
     <button id="logoutBtn" class="tb-btn">🚪 Abmelden</button>
   </div>
 
@@ -105,7 +116,7 @@
           <div class="tiny" id="progressInfo">–</div>
         </div>
 
-        <div id="songArea" class="muted" style="min-height:420px">lädt Songs …</div>
+        <div id="songArea" class="muted" style="min-height:460px">lädt Songs …</div>
 
         <div class="row">
           <button id="undoBtn" class="round undo" title="Undo" disabled>↩️</button>
@@ -125,7 +136,7 @@
     </div>
   </div>
 
-  <!-- Gate script -->
+  <!-- Zugangscode Script -->
   <script>
     (function(){
       const ACCESS_CODE = '1235';
@@ -172,6 +183,7 @@
     const passwordEl = document.getElementById('password');
     const loginBtn = document.getElementById('loginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
+    const inviteBtn = document.getElementById('inviteBtn');
 
     const songArea   = document.getElementById("songArea");
     const likeBtn    = document.getElementById("likeBtn");
@@ -182,7 +194,7 @@
     const plHint     = document.getElementById("plHint");
     const progressInfo = document.getElementById("progressInfo");
 
-    // --- Username login (email = username@sm.local) ---
+    /* ---------- Auth (Username = pseudo-email) ---------- */
     let signUpMode = false;
     function toEmail(u){ return `${u.trim().toLowerCase()}@sm.local`; }
     authSwitch.onclick = () => {
@@ -193,8 +205,7 @@
       authSwitch.textContent = signUpMode ? 'Anmelden' : 'Account erstellen';
     };
     loginBtn.onclick = async () => {
-      const u = usernameEl.value.trim();
-      const p = passwordEl.value;
+      const u = usernameEl.value.trim(); const p = passwordEl.value;
       if(!u || !p) { authMsg.textContent = 'Username + Passwort eingeben'; return; }
       authMsg.textContent = '...';
       try {
@@ -215,12 +226,50 @@
     logoutBtn.onclick = async () => {
       await signOut(auth);
       document.documentElement.classList.remove('auth-ok');
-      usernameEl.value = ''; passwordEl.value = '';
+      usernameEl.value=''; passwordEl.value='';
     };
 
-    // --- Shared pool + progress ---
-    const poolRef = doc(db, "config", "pool");    // { ids: [...] }
-    function progressRef(uid){ return doc(db, "progress", uid); } // { index: n }
+    /* ---------- Room handling (Invite-Link) ---------- */
+    const qp = new URLSearchParams(location.search);
+    let roomId = qp.get('r') || null;
+
+    function roomDoc(id){ return doc(db, "rooms", id); }
+    function roomPoolDoc(id){ return doc(db, "rooms", id, "config", "pool"); }
+    function roomProgressDoc(id, uid){ return doc(db, "rooms", id, "progress", uid); }
+    function roomVoteDoc(id, trackId){ return doc(db, "rooms", id, "votes", trackId); }
+
+    async function resolveRoomAfterLogin(uid){
+      if (roomId) {
+        // Bestehenden Room joinen (self-join erlaubt durch Rules)
+        const rs = await getDoc(roomDoc(roomId));
+        if (rs.exists()) {
+          const members = rs.data().members || [];
+          if (!members.includes(uid) && members.length < 2) {
+            await setDoc(roomDoc(roomId), { members: [...members, uid], updatedAt: serverTimestamp() }, { merge: true });
+          }
+          return;
+        }
+      }
+      // Neuen Room anlegen
+      roomId = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10);
+      await setDoc(roomDoc(roomId), {
+        members: [uid],
+        createdAt: serverTimestamp()
+      });
+      // Pool-Doc anlegen (leer)
+      await setDoc(roomPoolDoc(roomId), { ids: [], updatedAt: serverTimestamp() }, { merge: true });
+      // URL anpassen (damit Reloads im gleichen Room bleiben)
+      const url = new URL(location.href); url.searchParams.set('r', roomId); history.replaceState({}, '', url);
+    }
+
+    inviteBtn.onclick = async ()=>{
+      if (!roomId) return;
+      const link = `${location.origin}${location.pathname}?r=${roomId}`;
+      await navigator.clipboard.writeText(link);
+      alert("Invite-Link kopiert:\n" + link + "\nSchick ihn deinem Freund. Nach Login seid ihr beide im gleichen Room.");
+    };
+
+    /* ---------- Shared pool + progress ---------- */
     let uid = null, songs = [], index = 0, history = [];
     const listeningSet = new Set();
 
@@ -229,8 +278,11 @@
       uid = user.uid;
       document.documentElement.classList.add('auth-ok');
 
+      // Room festlegen/beitreten
+      await resolveRoomAfterLogin(uid);
+
       // Progress laden
-      const psnap = await getDoc(progressRef(uid));
+      const psnap = await getDoc(roomProgressDoc(roomId, uid));
       index = psnap.exists() ? (psnap.data().index || 0) : 0;
 
       // Pool sicherstellen & laden
@@ -238,20 +290,20 @@
       await reloadSongsFromPool();
       setupPlaylistListenersFor(songs);
       renderCurrent();
+
+      // Live-Updates des Pools
+      onSnapshot(roomPoolDoc(roomId), (snap)=>{
+        const data = snap.exists() ? snap.data() : null;
+        const ids = data?.ids || [];
+        if (ids.length) {
+          songs = ids;
+          if (index >= songs.length) index = Math.max(0, songs.length - 1);
+          renderCurrent();
+        }
+      });
     });
 
-    // Live-Updates des Pools
-    onSnapshot(poolRef, (snap)=>{
-      const data = snap.exists() ? snap.data() : null;
-      const ids = data?.ids || [];
-      if (ids.length) {
-        songs = ids;
-        if (index >= songs.length) index = Math.max(0, songs.length - 1);
-        renderCurrent();
-      }
-    });
-
-    // --- Pool via Search (client-credentials) ---
+    /* ---------- Spotify: Token + Search + Track-Meta für Preview ---------- */
     async function getToken() {
       const res = await fetch("https://reasorr-github-io.vercel.app/api/token"); // ggf. anpassen
       const data = await res.json();
@@ -278,63 +330,98 @@
       return out;
     }
     async function ensurePoolHasEnough(minCount=200){
-      const snap = await getDoc(poolRef);
+      const snap = await getDoc(roomPoolDoc(roomId));
       let ids = snap.exists() ? (snap.data().ids || []) : [];
       if (ids.length >= minCount) return;
       const batch = await buildBatch();
       const set = new Set(ids);
       for (const id of batch) if (!set.has(id)) { set.add(id); ids.push(id); }
-      await setDoc(poolRef, { ids, updatedAt: serverTimestamp() }, { merge: true });
+      await setDoc(roomPoolDoc(roomId), { ids, updatedAt: serverTimestamp() }, { merge: true });
     }
     async function reloadSongsFromPool(){
-      const snap = await getDoc(poolRef);
+      const snap = await getDoc(roomPoolDoc(roomId));
       songs = snap.exists() ? (snap.data().ids || []) : [];
     }
 
-    // --- UI helpers ---
-    function setButtons(on){ [likeBtn,nopeBtn,undoBtn,skipBtn].forEach(b=>b.disabled=!on); }
-    function updateProgressInfo(){
-      progressInfo.textContent = songs.length ? `Song ${Math.min(index+1,songs.length)} / ${songs.length}` : '–';
+    // Track Meta cache (preview_url, artist, title, cover, link)
+    const metaCache = new Map();
+    async function getTrackMeta(id){
+      if (metaCache.has(id)) return metaCache.get(id);
+      const token = await getToken();
+      const res = await fetch(`https://api.spotify.com/v1/tracks/${id}?market=DE`, {
+        headers: { "Authorization":"Bearer "+token }
+      });
+      if (!res.ok) { return { id, preview:null, cover:null, title:"", artist:"", link:`https://open.spotify.com/track/${id}` }; }
+      const t = await res.json();
+      const meta = {
+        id,
+        preview: t.preview_url || null,
+        cover: t.album?.images?.[0]?.url || null,
+        title: t.name || "",
+        artist: (t.artists||[]).map(a=>a.name).join(", "),
+        link: t.external_urls?.spotify || `https://open.spotify.com/track/${id}`
+      };
+      metaCache.set(id, meta);
+      return meta;
     }
 
-    // --- Swipe & Long-Press Interact (kein Modus-Schalter) ---
-    let cardEl=null, badgeLike=null, badgeNope=null;
-    let startX=0, startY=0, dx=0, dy=0, dragging=false, moved=false;
-    let holdTimer=null, interacting=false;
+    /* ---------- UI helpers ---------- */
+    function setButtons(on){ [likeBtn,nopeBtn,undoBtn,skipBtn].forEach(b=>b.disabled=!on); }
+    function updateProgressInfo(){ progressInfo.textContent = songs.length ? `Song ${Math.min(index+1,songs.length)} / ${songs.length}` : '–'; }
 
-    function mountSwipeCard(trackId){
-      if (!trackId) { songArea.textContent = "🎶 Lade Songs …"; return; }
+    /* ---------- Swipe + Preview Audio ---------- */
+    let cardEl=null, badgeLike=null, badgeNope=null, audioEl=null, playing=false;
+    let startX=0, startY=0, dx=0, dy=0, dragging=false;
+
+    function mountSwipeCard(meta){
+      const { id, preview, cover, title, artist, link } = meta;
       songArea.innerHTML = `
         <div class="swipe-wrap">
           <div class="swipe-card" id="swipeCard">
             <div class="badge like" id="badgeLike">LIKE</div>
             <div class="badge nope" id="badgeNope">NOPE</div>
-            <iframe id="spotifyFrame"
-              src="https://open.spotify.com/embed/track/${trackId}"
-              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+
+            <div class="cover">
+              ${cover ? `<img src="${cover}" alt="">` : `<div class="muted">kein Cover</div>`}
+              <button id="playBtn" class="playbtn">${preview ? '▶︎ Abspielen' : '↗︎ In Spotify öffnen'}</button>
+            </div>
+
+            <div class="meta">
+              <div>
+                <div class="title">${title || '–'}</div>
+                <div class="artist">${artist || ''}</div>
+              </div>
+              <button class="open" onclick="window.open('${link}','_blank')">Open in Spotify</button>
+            </div>
           </div>
         </div>`;
       cardEl = document.getElementById("swipeCard");
       badgeLike = document.getElementById("badgeLike");
       badgeNope = document.getElementById("badgeNope");
+      const playBtn = document.getElementById("playBtn");
 
-      const frame = document.getElementById('spotifyFrame');
-      frame.style.pointerEvents = 'none'; // Swipe ist default
+      // prepare audio
+      if (audioEl) { try { audioEl.pause(); } catch{} }
+      audioEl = null; playing = false;
+      if (preview) {
+        audioEl = new Audio(preview);
+        audioEl.preload = 'none';
+        audioEl.onended = ()=>{ playing=false; playBtn.textContent='▶︎ Abspielen'; };
+        playBtn.onclick = async (e)=>{ e.stopPropagation();
+          try {
+            if (!playing) { await audioEl.play(); playing=true; playBtn.textContent='⏸︎ Pause'; }
+            else { audioEl.pause(); playing=false; playBtn.textContent='▶︎ Abspielen'; }
+          } catch (err) { alert('Konnte Audio nicht starten (Autoplay blockiert). Tippe nochmal auf Abspielen.'); }
+        };
+      } else {
+        playBtn.onclick = (e)=>{ e.stopPropagation(); window.open(link, '_blank'); };
+      }
 
-      const start = (x,y)=>{
-        startX=x; startY=y; dx=0; dy=0; dragging=true; moved=false; interacting=false;
-        cardEl.style.transition='none'; setButtons(false);
-        clearTimeout(holdTimer);
-        holdTimer = setTimeout(()=>{ // Long-Press → kurz interagieren
-          interacting = true;
-          frame.style.pointerEvents = 'auto';
-        }, 550);
-      };
-      const move  = (x,y)=>{
+      // gestures
+      const onStart = (x,y)=>{ startX=x; startY=y; dx=0; dy=0; dragging=true; cardEl.style.transition='none'; setButtons(false); };
+      const onMove  = (x,y)=>{
         if(!dragging) return;
         dx = x-startX; dy = y-startY;
-        if (!moved && (Math.abs(dx)>8 || Math.abs(dy)>8)) { moved=true; clearTimeout(holdTimer); }
-        if (interacting) return; // bei Interaktion keine Swipe-Gesten
         const rot = Math.max(-15, Math.min(15, dx/10));
         cardEl.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
         const s = Math.min(1, Math.abs(dx)/90);
@@ -342,21 +429,12 @@
         else if (dx<0){ badgeNope.style.opacity = s; badgeLike.style.opacity = 0; }
         else { badgeLike.style.opacity=badgeNope.style.opacity=0; }
       };
-      const end = ()=>{
+      const onEnd = ()=>{
         if(!dragging) return;
-        dragging=false;
-        clearTimeout(holdTimer);
-        if (interacting) {
-          // Interaktion beendet → zurück zu Swipe
-          interacting = false;
-          frame.style.pointerEvents = 'none';
-          setButtons(true);
-          return;
-        }
-        cardEl.style.transition='';
+        dragging=false; cardEl.style.transition='';
         const threshold = 90;
-        if (dx > threshold) { animateDecision('right'); vote('like'); }
-        else if (dx < -threshold) { animateDecision('left'); vote('dislike'); }
+        if (dx > threshold) { if (audioEl) audioEl.pause(); animateDecision('right'); vote('like'); }
+        else if (dx < -threshold) { if (audioEl) audioEl.pause(); animateDecision('left'); vote('dislike'); }
         else {
           cardEl.style.transform = `translate(0px, 0px) rotate(0deg)`;
           badgeLike.style.opacity = badgeNope.style.opacity = 0;
@@ -364,14 +442,12 @@
         }
       };
 
-      // Touch
-      cardEl.addEventListener('touchstart', e=>{ const t=e.touches[0]; start(t.clientX,t.clientY); }, {passive:true});
-      cardEl.addEventListener('touchmove',  e=>{ const t=e.touches[0]; move(t.clientX,t.clientY); }, {passive:true});
-      cardEl.addEventListener('touchend', end);
-      // Mouse
-      cardEl.addEventListener('mousedown', e=>{ start(e.clientX,e.clientY); });
-      window.addEventListener('mousemove', e=>{ move(e.clientX,e.clientY); });
-      window.addEventListener('mouseup', end);
+      cardEl.addEventListener('touchstart', e=>{ const t=e.touches[0]; onStart(t.clientX,t.clientY); }, {passive:true});
+      cardEl.addEventListener('touchmove',  e=>{ const t=e.touches[0]; onMove(t.clientX,t.clientY); }, {passive:true});
+      cardEl.addEventListener('touchend', onEnd);
+      cardEl.addEventListener('mousedown', e=>{ onStart(e.clientX,e.clientY); });
+      window.addEventListener('mousemove', e=>{ onMove(e.clientX,e.clientY); });
+      window.addEventListener('mouseup', onEnd);
     }
 
     function animateDecision(direction){
@@ -379,53 +455,49 @@
       const offX = direction==='right' ? window.innerWidth : -window.innerWidth;
       cardEl.style.transition = 'transform .25s ease, opacity .25s ease';
       cardEl.style.transform  = `translate(${offX}px, 0) rotate(${direction==='right'?15:-15}deg)`;
-      cardEl.style.opacity = '0';
-      badgeLike && (badgeLike.style.opacity=0);
-      badgeNope && (badgeNope.style.opacity=0);
+      cardEl.style.opacity = '0'; badgeLike && (badgeLike.style.opacity=0); badgeNope && (badgeNope.style.opacity=0);
     }
 
-    // --- Render current (robustes Nachfüllen) ---
+    /* ---------- Render (mit robustem Nachfüllen) ---------- */
     async function renderCurrent(){
       if (!songs.length){
         songArea.textContent = "🎶 Lade Songs …";
-        await ensurePoolHasEnough(200);
-        await reloadSongsFromPool();
+        await ensurePoolHasEnough(200); await reloadSongsFromPool();
       }
-      if (!songs.length){
-        songArea.textContent = "😕 Konnte keine Songs laden.";
-        return;
-      }
+      if (!songs.length){ songArea.textContent = "😕 Konnte keine Songs laden."; return; }
+
       if (index >= songs.length) {
-        // wir sind am Ende → auffüllen & neu laden
-        await ensurePoolHasEnough(200);
-        await reloadSongsFromPool();
+        await ensurePoolHasEnough(200); await reloadSongsFromPool();
         if (index >= songs.length) index = Math.max(0, songs.length - 1);
       }
+
       const id = songs[index];
-      mountSwipeCard(id);
+      const meta = await getTrackMeta(id);
+      mountSwipeCard(meta);
       updateProgressInfo();
       setButtons(true);
+
       if (songs.length - index - 1 < 15) { ensurePoolHasEnough(200); } // fire & forget
     }
 
-    // --- Voting + Undo/Skip ---
+    /* ---------- Voting + Undo/Skip ---------- */
     async function vote(val){
       if(!uid || index >= songs.length) return;
       const id = songs[index];
       history.push({ id, val });
-      await setDoc(doc(db, "votes", id), { [uid]: val, updatedAt: serverTimestamp() }, { merge: true });
+      await setDoc(roomVoteDoc(roomId, id), { [uid]: val, updatedAt: serverTimestamp() }, { merge: true });
       index = Math.min(index + 1, songs.length);
-      await setDoc(progressRef(uid), { index, updatedAt: serverTimestamp() }, { merge: true });
-      setTimeout(()=>{ renderCurrent(); }, 150);
+      await setDoc(roomProgressDoc(roomId, uid), { index, updatedAt: serverTimestamp() }, { merge: true });
+      setTimeout(renderCurrent, 150);
       if (navigator.vibrate) { navigator.vibrate(10); }
     }
     likeBtn.onclick = ()=>{ animateDecision('right'); vote('like'); };
     nopeBtn.onclick = ()=>{ animateDecision('left');  vote('dislike'); };
-    skipBtn.onclick = ()=>{ index = Math.min(index + 1, songs.length); setDoc(progressRef(uid), { index, updatedAt: serverTimestamp() }, { merge:true }); renderCurrent(); };
+    skipBtn.onclick = ()=>{ index = Math.min(index + 1, songs.length); setDoc(roomProgressDoc(roomId, uid), { index, updatedAt: serverTimestamp() }, { merge:true }); renderCurrent(); };
     undoBtn.onclick = async ()=>{
       const last = history.pop(); if(!last) return;
       index = Math.max(index - 1, 0);
-      await setDoc(progressRef(uid), { index, updatedAt: serverTimestamp() }, { merge: true });
+      await setDoc(roomProgressDoc(roomId, uid), { index, updatedAt: serverTimestamp() }, { merge: true });
       renderCurrent();
     };
     window.addEventListener('keydown', e=>{
@@ -435,13 +507,12 @@
       if(e.key===' ') { e.preventDefault(); skipBtn.click(); }
     });
 
-    // --- Gemeinsame Playlist (Listener nur einmal pro Track) ---
+    /* ---------- Gemeinsame Playlist (2 Likes) ---------- */
     function setupPlaylistListenersFor(ids){
       ids.forEach(id=>{
         if (listeningSet.has(id)) return;
         listeningSet.add(id);
-        const ref = doc(db, "votes", id);
-        onSnapshot(ref, snap => {
+        onSnapshot(roomVoteDoc(roomId, id), snap => {
           if(!snap.exists()) return;
           const data = snap.data();
           const vals = Object.values(data).filter(v => v==="like"||v==="dislike");
