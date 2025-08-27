@@ -10,16 +10,12 @@
     body { font-family: system-ui, Arial, sans-serif; background:#0b0f14; color:#fff; margin:0; }
 
     /* ---- Topbar ---- */
-    .topbar {
-      position:sticky; top:0; z-index:50; backdrop-filter: blur(6px);
-      background:rgba(10,14,20,.7); border-bottom:1px solid rgba(255,255,255,.06);
-      display:flex; align-items:center; gap:8px; padding:10px 12px;
-    }
+    .topbar { position:sticky; top:0; z-index:50; backdrop-filter: blur(6px); background:rgba(10,14,20,.7); border-bottom:1px solid rgba(255,255,255,.06); display:flex; align-items:center; gap:8px; padding:10px 12px; }
     .brand { font-weight:800; letter-spacing:.3px; }
     .spacer { flex:1; }
     .tb-btn { background:#1f2a3a; color:#fff; border:none; border-radius:10px; padding:8px 12px; cursor:pointer; }
 
-    /* ---- Gate (code) & Auth ---- */
+    /* ---- Gate & Auth ---- */
     .gate, .auth { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:#000; z-index:9999; }
     .card { background:#121822; padding:24px; border-radius:14px; width:min(420px,92vw); }
     .card h1, .card h2 { margin:0 0 8px 0; }
@@ -36,41 +32,23 @@
     .panel { background:#121822; margin:20px 0; padding:20px; border-radius:14px; }
 
     /* ---- Swipe card ---- */
-    .swipe-wrap { position:relative; height:420px; display:flex; align-items:center; justify-content:center; touch-action:pan-y; }
-    .swipe-card {
-      position:absolute; width:min(360px,92vw); height:380px; border-radius:16px; overflow:hidden;
-      box-shadow:0 10px 30px rgba(0,0,0,.35); background:#0f1520;
-      transition: transform .25s ease, opacity .25s ease;
-      touch-action: none; /* wir steuern Gesten selbst */
-      animation: popin .25s ease;
-    }
+    .swipe-wrap { position:relative; height:420px; display:flex; align-items:center; justify-content:center; }
+    .swipe-card { position:absolute; width:min(360px,92vw); height:380px; border-radius:16px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.35); background:#0f1520; transition: transform .25s ease, opacity .25s ease; animation: popin .25s ease; }
     @keyframes popin { from{ transform:scale(.96); opacity:.0 } to{ transform:scale(1); opacity:1 } }
     .swipe-card iframe { width:100%; height:100%; border:0; display:block; }
     .badge { position:absolute; top:12px; padding:6px 10px; border-radius:8px; font-weight:800; letter-spacing:.5px; opacity:0; transition:opacity .12s ease; pointer-events:none; }
     .badge.like { left:12px; background:rgba(46,204,113,.9); }
     .badge.nope { right:12px; background:rgba(231,76,60,.9); }
 
-    .row { display:flex; gap:14px; align-items:center; justify-content:center; flex-wrap:wrap; margin-top:12px; }
-    .round { width:58px; height:58px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; border:none; cursor:pointer; font-size:22px; }
-    .round.like { background:#2ecc71; }
-    .round.nope { background:#e74c3c; }
-    .round.undo { background:#4b5563; }
-    .round.skip { background:#374151; }
-    .round:disabled { opacity:.6; cursor:not-allowed; }
-
-    .playlist { display:grid; gap:10px; }
-    iframe.embed-small { width:100%; height:80px; border-radius:10px; }
-    .tiny { font-size:12px; opacity:.7; }
-    .gesture-layer { position:absolute; inset:0; pointer-events:none; z-index:5; }
-    .gesture-gutter { position:absolute; top:0; bottom:0; width:26%; pointer-events:auto; touch-action:none; z-index:6; }
-    .gesture-gutter.left { left:0; }
-    .gesture-gutter.right { right:0; }
-    .round.play { background:#2563eb; }
-    /* Swipe-Topzone und Playbar */
+    /* Swipe area + Playbar */
     .gesture-top { position:absolute; left:0; right:0; top:0; height:72%; pointer-events:auto; touch-action:none; z-index:6; }
     .playbar { margin-top:12px; display:flex; justify-content:center; }
     .playbar-btn { width:min(360px,92vw); border-radius:999px; padding:14px 16px; background:#1f2a3a; color:#fff; border:none; font-weight:700; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.25); }
     .playbar-btn:active { transform: translateY(1px); }
+
+    .playlist { display:grid; gap:10px; }
+    iframe.embed-small { width:100%; height:80px; border-radius:10px; }
+    .tiny { font-size:12px; opacity:.7; }
   </style>
 </head>
 <body>
@@ -116,15 +94,14 @@
         </div>
 
         <div id="songArea" class="muted" style="min-height:420px">lädt Songs …</div>
+
         <div class="playbar"><button id="playBarBtn" class="playbar-btn" title="Play/Pause">▶️ Tippen zum Abspielen</button></div>
       </div>
 
       <div class="panel">
         <h2 style="margin:0 0 10px 0">Gemeinsame Playlist</h2>
         <div id="playlist" class="playlist"></div>
-        <p id="plHint" class="muted" style="margin-top:6px;">
-          Hier erscheinen Songs automatisch, sobald ihr beide ❤️ geklickt habt.
-        </p>
+        <p id="plHint" class="muted" style="margin-top:6px;">Hier erscheinen Songs automatisch, sobald ihr beide ❤️ geswiped habt.</p>
       </div>
     </div>
   </div>
@@ -148,14 +125,13 @@
 
   <!-- App logic -->
   <script type="module">
+    // ---- Surface JS errors on auth screen ----
+    window.addEventListener('error', (e)=>{ try { document.getElementById('authMsg').textContent = 'JavaScript error: ' + (e?.message||'unknown'); } catch(_){} });
+    window.addEventListener('unhandledrejection', (e)=>{ try { document.getElementById('authMsg').textContent = 'Runtime error: ' + (e?.reason?.message||e?.reason||'unknown'); } catch(_){} });
+
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
-    import {
-      getAuth, onAuthStateChanged, createUserWithEmailAndPassword,
-      signInWithEmailAndPassword, updateProfile, signOut
-    } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-    import {
-      getFirestore, doc, setDoc, getDoc, onSnapshot, serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
     // --- Firebase ---
     const firebaseConfig = {
@@ -175,34 +151,17 @@
     const authSwitch = document.getElementById('authSwitch');
     const authSwitchText = document.getElementById('authSwitchText');
     const authMsg = document.getElementById('authMsg');
-
-    // Surface JS errors to the auth screen to avoid silent failures blocking login
-    window.addEventListener('error', (e)=>{
-      try { authMsg.textContent = 'JavaScript error: ' + (e?.message||'unknown'); } catch(_) {}
-    });
-    window.addEventListener('unhandledrejection', (e)=>{
-      try { authMsg.textContent = 'Runtime error: ' + (e?.reason?.message || e?.reason || 'unknown'); } catch(_) {}
-    });
     const usernameEl = document.getElementById('username');
     const passwordEl = document.getElementById('password');
     const loginBtn = document.getElementById('loginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
 
     const songArea   = document.getElementById("songArea");
-    const likeBtn    = document.getElementById("likeBtn");
-    const nopeBtn    = document.getElementById("nopeBtn");
-    const undoBtn    = document.getElementById("undoBtn");
-    const skipBtn    = document.getElementById("skipBtn");
     const playlistEl = document.getElementById("playlist");
     const plHint     = document.getElementById("plHint");
     const progressInfo = document.getElementById("progressInfo");
-
     const playBarBtn = document.getElementById("playBarBtn");
     const updatePlayBtn = (playing)=>{ if(!playBarBtn) return; playBarBtn.textContent = playing ? '⏸️ Tippen zum Pausieren' : '▶️ Tippen zum Abspielen'; };
-    if (playBarBtn) playBarBtn.onclick = ()=>{ try { if (embedCtrl?.togglePlay) embedCtrl.togglePlay(); } catch(e){} };
-
-    // keine weiteren Buttons – Swipe only
-    
 
     // --- Username login (email = username@sm.local) ---
     let signUpMode = false;
@@ -273,9 +232,9 @@
       }
     });
 
-    // --- Pool via Search (client-credentials) ---
+    // --- Pool via Web API (Charts) + Search fallback ---
     async function getToken() {
-      const res = await fetch("https://reasorr-github-io.vercel.app/api/token"); // ggf. anpassen
+      const res = await fetch("https://reasorr-github-io.vercel.app/api/token"); // client-credentials proxy
       const data = await res.json();
       return data.access_token;
     }
@@ -290,7 +249,6 @@
     async function buildBatch(){
       const token = await getToken();
 
-      // Helpers (scoped): find playlist by name and fetch its tracks
       async function searchPlaylist(token, name){
         const url = `https://api.spotify.com/v1/search?type=playlist&limit=1&q=${encodeURIComponent(name)}`;
         const res = await fetch(url, { headers: { Authorization: 'Bearer '+token } });
@@ -307,13 +265,7 @@
         return items.map(it => it?.track?.id).filter(Boolean);
       }
 
-      // 1) Pull from Spotify editorial playlists (charts)
-      const chartNames = [
-        'Top 50 - Germany',
-        'Top 50 - Global',
-        'Viral 50 - Germany',
-        'Viral 50 - Global'
-      ];
+      const chartNames = [ 'Top 50 - Germany', 'Top 50 - Global', 'Viral 50 - Germany', 'Viral 50 - Global' ];
       let pool = [];
       for (const name of chartNames){
         try {
@@ -325,17 +277,9 @@
         } catch(e){ console.warn('Chart fetch failed', name, e); }
       }
 
-      // 2) Plus some fresh variety from Search (as before)
-      const queries = [
-        'pop year:2022-2025','hip hop year:2022-2025','dance year:2021-2025',
-        'rock year:2019-2025','indie year:2019-2025','house year:2020-2025','r&b year:2020-2025'
-      ];
-      for (const q of queries){
-        try { pool = pool.concat(await searchTracks(token, q, 50)); }
-        catch(e){ console.warn('Search mix failed', q, e); }
-      }
+      const queries = [ 'pop year:2022-2025','hip hop year:2022-2025','dance year:2021-2025','rock year:2019-2025','indie year:2019-2025','house year:2020-2025','r&b year:2020-2025' ];
+      for (const q of queries){ try { pool = pool.concat(await searchTracks(token, q, 50)); } catch(e){ console.warn('Search mix failed', q, e); } }
 
-      // Deduplicate
       const seen = new Set(); const out = [];
       for (const id of pool) if (id && !seen.has(id)) { seen.add(id); out.push(id); }
       return out;
@@ -345,39 +289,22 @@
       let ids = snap.exists() ? (snap.data().ids || []) : [];
       if (ids.length >= minCount) return;
       const batch = await buildBatch();
-      const set = new Set(ids);
-      for (const id of batch) if (!set.has(id)) { set.add(id); ids.push(id); }
+      const setIds = new Set(ids);
+      for (const id of batch) if (!setIds.has(id)) { setIds.add(id); ids.push(id); }
       await setDoc(poolRef, { ids, updatedAt: serverTimestamp() }, { merge: true });
     }
-    async function reloadSongsFromPool(){
-      const snap = await getDoc(poolRef);
-      songs = snap.exists() ? (snap.data().ids || []) : [];
+    async function reloadSongsFromPool(){ const snap = await getDoc(poolRef); songs = snap.exists() ? (snap.data().ids || []) : [];
     }
 
     // --- Spotify IFrame API readiness ---
     let spotifyApiReady = new Promise(resolve => { window.onSpotifyIframeApiReady = resolve; });
     let embedCtrl = null; // aktueller EmbedController
 
-    // --- UI helpers ---
-    function setButtons(on){ /* no-op: Buttons entfernt, Swipe only */ }
-    function updateProgressInfo(){
-      progressInfo.textContent = songs.length ? `Song ${Math.min(index+1,songs.length)} / ${songs.length}` : '–';
-    }
-
-    // --- Swipe & Long-Press Interact (nur aktiv wenn Musik läuft) ---
+    // --- Swipe (always enabled in top zone) ---
     let cardEl=null, badgeLike=null, badgeNope=null, gestureEl=null;
-    let startX=0, startY=0, dx=0, dy=0, dragging=false, moved=false;
-    let holdTimer=null, interacting=false;
+    let startX=0, startY=0, dx=0, dy=0, dragging=false;
 
-    let swipeEnabled = false; // wird über Playback-State gesetzt
-
-    function setSwipeMode(on){
-      swipeEnabled = true; // immer swipen erlauben
-      const hint = document.getElementById('swipeHint');
-      if (hint) hint.style.display = '';
-    }
-
-    async function mountSwipeCard(trackId){
+    function mountSwipeCard(trackId){
       if (!trackId) { songArea.textContent = "🎶 Lade Songs …"; return; }
       songArea.innerHTML = `
         <div class="swipe-wrap">
@@ -385,58 +312,33 @@
             <div class="badge like" id="badgeLike">LIKE</div>
             <div class="badge nope" id="badgeNope">NOPE</div>
             <div id="spotifyHost" style="width:100%;height:100%"></div>
-            <div id="swipeHint" class="tiny" style="position:absolute;bottom:10px;left:0;right:0;text-align:center;opacity:.85">↔️ Oben swipen • unten Leiste zum Play/Pause</div>
+            <div class="gesture-top" id="gestureTop"></div>
           </div>
         </div>`;
-      cardEl = document.getElementById("swipeCard");
-      // Gesten-Overlay-Container (Center bleibt klickbar fürs Iframe)
-      gestureEl = document.createElement('div');
-      gestureEl.id = 'gestureTop';
-      gestureEl.className = 'gesture-top';
-      cardEl.appendChild(gestureEl);
-      badgeLike = document.getElementById("badgeLike");
-      badgeNope = document.getElementById("badgeNope");
+      cardEl = document.getElementById('swipeCard');
+      badgeLike = document.getElementById('badgeLike');
+      badgeNope = document.getElementById('badgeNope');
+      gestureEl = document.getElementById('gestureTop');
 
-      // Standard: Swipe AUS, Interaktion EIN (damit Play klickbar ist)
-      setSwipeMode(false);
-
-      // Spotify IFrame API Controller initialisieren
-      try {
-        const IFrameAPI = await spotifyApiReady;
+      // Spotify controller
+      spotifyApiReady.then((IFrameAPI)=>{
         const host = document.getElementById('spotifyHost');
-        if (!IFrameAPI || !host) throw new Error('Spotify IFrame API nicht verfügbar');
+        if (!IFrameAPI || !host) return;
         IFrameAPI.createController(host, { uri: `spotify:track:${trackId}`, width: '100%', height: '100%' }, (controller) => {
           embedCtrl = controller;
-          controller.addListener('ready', () => {
-            // Autoplay entfernt – warte auf Benutzeraktion
-            updatePlayBtn(false);
-          });
+          controller.addListener('ready', () => { updatePlayBtn(false); });
           controller.addListener('playback_update', ({ data }) => {
             const playing = data?.isPaused === false;
-            setSwipeMode(playing);
             updatePlayBtn(playing);
           });
         });
-      } catch (e) {
-        console.warn('Spotify IFrame API Fehler/Fallback', e);
-        // Fallback: normales Embed (ohne Zustands-Infos) – Swipe bleibt aus, bis Nutzer manuell aktiviert (nicht vorgesehen)
-        const host = document.getElementById('spotifyHost');
-        host.innerHTML = `<iframe src="https://open.spotify.com/embed/track/${trackId}" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
-        setSwipeMode(false);
-      }
+      });
 
-      const start = (x,y)=>{
-        if(!swipeEnabled) return; // Swipen nur, wenn Musik läuft
-        startX=x; startY=y; dx=0; dy=0; dragging=true; moved=false; interacting=false;
-        cardEl.style.transition='none'; 
-        clearTimeout(holdTimer);
-        holdTimer = setTimeout(()=>{ interacting = true; }, 550);
-      };
+      // Gesten
+      const start = (x,y)=>{ startX=x; startY=y; dx=0; dy=0; dragging=true; cardEl.style.transition='none'; };
       const move  = (x,y)=>{
         if(!dragging) return;
         dx = x-startX; dy = y-startY;
-        if (!moved && (Math.abs(dx)>8 || Math.abs(dy)>8)) { moved=true; clearTimeout(holdTimer); }
-        if (interacting) return; // bei Interaktion keine Swipe-Gesten
         const rot = Math.max(-15, Math.min(15, dx/10));
         cardEl.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
         const s = Math.min(1, Math.abs(dx)/90);
@@ -446,32 +348,18 @@
       };
       const end = ()=>{
         if(!dragging) return;
-        dragging=false;
-        clearTimeout(holdTimer);
-        if (interacting) { interacting = false; return; }
-        cardEl.style.transition='';
+        dragging=false; cardEl.style.transition='';
         const threshold = 90;
         if (dx > threshold) { animateDecision('right'); vote('like'); }
         else if (dx < -threshold) { animateDecision('left'); vote('dislike'); }
-        else {
-          cardEl.style.transform = `translate(0px, 0px) rotate(0deg)`;
-          badgeLike.style.opacity = badgeNope.style.opacity = 0;
-          setButtons(true);
-        }
+        else { cardEl.style.transform = `translate(0px, 0px) rotate(0deg)`; badgeLike.style.opacity = badgeNope.style.opacity = 0; }
       };
-
-      // Touch
-      function attachGestures(el){
-        el.addEventListener('touchstart', e=>{ const t=e.touches[0]; start(t.clientX,t.clientY); }, {passive:true});
-        el.addEventListener('touchmove',  e=>{ const t=e.touches[0]; move(t.clientX,t.clientY); }, {passive:true});
-        el.addEventListener('touchend', end);
-        el.addEventListener('mousedown', e=>{ start(e.clientX,e.clientY); });
-      }
-      attachGestures(gestureEl);
+      gestureEl.addEventListener('touchstart', e=>{ const t=e.touches[0]; start(t.clientX,t.clientY); }, {passive:true});
+      gestureEl.addEventListener('touchmove',  e=>{ const t=e.touches[0]; move(t.clientX,t.clientY); }, {passive:true});
+      gestureEl.addEventListener('touchend', end);
+      gestureEl.addEventListener('mousedown', e=>{ start(e.clientX,e.clientY); });
       window.addEventListener('mousemove', e=>{ move(e.clientX,e.clientY); });
       window.addEventListener('mouseup', end);
-      // Buttons nach dem Mount sicher aktivieren (auch wenn Musik pausiert)
-      setButtons(true);
     }
 
     function animateDecision(direction){
@@ -484,32 +372,18 @@
       badgeNope && (badgeNope.style.opacity=0);
     }
 
-    // --- Render current (robustes Nachfüllen) ---
+    // --- Render current ---
     async function renderCurrent(){
-      if (!songs.length){
-        songArea.textContent = "🎶 Lade Songs …";
-        await ensurePoolHasEnough(200);
-        await reloadSongsFromPool();
-      }
-      if (!songs.length){
-        songArea.textContent = "😕 Konnte keine Songs laden.";
-        return;
-      }
-      if (index >= songs.length) {
-        // wir sind am Ende → auffüllen & neu laden
-        await ensurePoolHasEnough(200);
-        await reloadSongsFromPool();
-        if (index >= songs.length) index = Math.max(0, songs.length - 1);
-      }
+      if (!songs.length){ songArea.textContent = "🎶 Lade Songs …"; await ensurePoolHasEnough(200); await reloadSongsFromPool(); }
+      if (!songs.length){ songArea.textContent = "😕 Konnte keine Songs laden."; return; }
+      if (index >= songs.length) { await ensurePoolHasEnough(200); await reloadSongsFromPool(); if (index >= songs.length) index = Math.max(0, songs.length - 1); }
       const id = songs[index];
-      await mountSwipeCard(id);
+      mountSwipeCard(id);
       updateProgressInfo();
-      // Nach Render sicherstellen, dass Buttons aktiv sind
-      setButtons(true);
-      // Start-Zustand: erst Play → dann Swipe (Buttons sind via setSwipeMode(false) deaktiviert)
     }
+    function updateProgressInfo(){ progressInfo.textContent = songs.length ? `Song ${Math.min(index+1,songs.length)} / ${songs.length}` : '–'; }
 
-    // --- Voting + Undo/Skip ---
+    // --- Voting + Undo history (internal, no buttons) ---
     async function vote(val){
       if(!uid || index >= songs.length) return;
       const id = songs[index];
@@ -520,18 +394,19 @@
       setTimeout(()=>{ renderCurrent(); }, 150);
       if (navigator.vibrate) { navigator.vibrate(10); }
     }
-                /* Undo entfernt */
-    window.addEventListener('keydown', e=>{
+
+    // --- Playbar toggle --- 
+    if (playBarBtn) playBarBtn.onclick = ()=>{ try { if (embedCtrl?.togglePlay) embedCtrl.togglePlay(); } catch(e){} };
+
+    // --- Keyboard shortcuts ---
+    window.addEventListener('keydown', (e)=>{
       const k = (e.key||'').toLowerCase();
       if(k==='arrowright'){ animateDecision('right'); vote('like'); }
       if(k==='arrowleft'){  animateDecision('left');  vote('dislike'); }
-      if(k==='p'){ e.preventDefault(); document.getElementById('playBarBtn')?.click(); }
-    });
-      if(e.key==='ArrowLeft')  nopeBtn.click();
-      if(e.key===' ') { e.preventDefault(); skipBtn.click(); }
+      if(k==='p'){ e.preventDefault(); playBarBtn?.click(); }
     });
 
-    // --- Gemeinsame Playlist (Listener nur einmal pro Track) ---
+    // --- Playlist live updates ---
     function setupPlaylistListenersFor(ids){
       ids.forEach(id=>{
         if (listeningSet.has(id)) return;
