@@ -418,6 +418,8 @@
       cardEl.addEventListener('mousedown', e=>{ start(e.clientX,e.clientY); });
       window.addEventListener('mousemove', e=>{ move(e.clientX,e.clientY); });
       window.addEventListener('mouseup', end);
+      // Buttons nach dem Mount sicher aktivieren (auch wenn Musik pausiert)
+      setButtons(true);
     }
 
     function animateDecision(direction){
@@ -450,6 +452,8 @@
       const id = songs[index];
       await mountSwipeCard(id);
       updateProgressInfo();
+      // Nach Render sicherstellen, dass Buttons aktiv sind
+      setButtons(true);
       // Start-Zustand: erst Play → dann Swipe (Buttons sind via setSwipeMode(false) deaktiviert)
     }
 
