@@ -45,7 +45,7 @@
       animation: popin .25s ease;
     }
     @keyframes popin { from{ transform:scale(.96); opacity:.0 } to{ transform:scale(1); opacity:1 } }
-    .swipe-card iframe { width:100%; height:100%; border:0; display:block; } /* pointerEvents steuern wir dynamisch */
+    .swipe-card iframe { width:100%; height:100%; border:0; display:block; }
     .badge { position:absolute; top:12px; padding:6px 10px; border-radius:8px; font-weight:800; letter-spacing:.5px; opacity:0; transition:opacity .12s ease; pointer-events:none; }
     .badge.like { left:12px; background:rgba(46,204,113,.9); }
     .badge.nope { right:12px; background:rgba(231,76,60,.9); }
@@ -138,6 +138,9 @@
       };
     })();
   </script>
+
+  <!-- Spotify IFrame API for playback state -->
+  <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
 
   <!-- App logic -->
   <script type="module">
@@ -291,43 +294,86 @@
       songs = snap.exists() ? (snap.data().ids || []) : [];
     }
 
+    // --- Spotify IFrame API readiness ---
+    let spotifyApiReady = new Promise(resolve => { window.onSpotifyIframeApiReady = resolve; });
+    let embedCtrl = null; // aktueller EmbedController
+
     // --- UI helpers ---
     function setButtons(on){ [likeBtn,nopeBtn,undoBtn,skipBtn].forEach(b=>b.disabled=!on); }
     function updateProgressInfo(){
       progressInfo.textContent = songs.length ? `Song ${Math.min(index+1,songs.length)} / ${songs.length}` : '–';
     }
 
-    // --- Swipe & Long-Press Interact (kein Modus-Schalter) ---
+    // --- Swipe & Long-Press Interact (nur aktiv wenn Musik läuft) ---
     let cardEl=null, badgeLike=null, badgeNope=null;
     let startX=0, startY=0, dx=0, dy=0, dragging=false, moved=false;
     let holdTimer=null, interacting=false;
 
-    function mountSwipeCard(trackId){
+    let swipeEnabled = false; // wird über Playback-State gesetzt
+
+    function setSwipeMode(on){
+      swipeEnabled = on;
+      // Buttons nur aktiv, wenn swipen erlaubt (Musik läuft)
+      setButtons(on);
+      // Iframe-PointerEvents: Wenn kein Swipe → Interaktion (Play) erlauben
+      const frame = cardEl?.querySelector('iframe');
+      if (frame) frame.style.pointerEvents = on ? 'none' : 'auto';
+      const hint = document.getElementById('swipeHint');
+      if (hint) hint.style.display = on ? 'none' : '';
+    }
+
+    async function mountSwipeCard(trackId){
       if (!trackId) { songArea.textContent = "🎶 Lade Songs …"; return; }
       songArea.innerHTML = `
         <div class="swipe-wrap">
           <div class="swipe-card" id="swipeCard">
             <div class="badge like" id="badgeLike">LIKE</div>
             <div class="badge nope" id="badgeNope">NOPE</div>
-            <iframe id="spotifyFrame"
-              src="https://open.spotify.com/embed/track/${trackId}"
-              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+            <div id="spotifyHost" style="width:100%;height:100%"></div>
+            <div id="swipeHint" class="tiny" style="position:absolute;bottom:10px;left:0;right:0;text-align:center;opacity:.85">▶️ Spiele den Song ab, dann kannst du swipen</div>
           </div>
         </div>`;
       cardEl = document.getElementById("swipeCard");
       badgeLike = document.getElementById("badgeLike");
       badgeNope = document.getElementById("badgeNope");
 
-      const frame = document.getElementById('spotifyFrame');
-      frame.style.pointerEvents = 'none'; // Swipe ist default
+      // Standard: Swipe AUS, Interaktion EIN (damit Play klickbar ist)
+      setSwipeMode(false);
+
+      // Spotify IFrame API Controller initialisieren
+      try {
+        const IFrameAPI = await spotifyApiReady;
+        const host = document.getElementById('spotifyHost');
+        if (!IFrameAPI || !host) throw new Error('Spotify IFrame API nicht verfügbar');
+        IFrameAPI.createController(host, { uri: `spotify:track:${trackId}`, width: '100%', height: '100%' }, (controller) => {
+          embedCtrl = controller;
+          controller.addListener('ready', () => {
+            // sobald bereit: warten auf Play
+            setSwipeMode(false);
+          });
+          controller.addListener('playback_update', ({ data }) => {
+            // aktivieren, wenn nicht pausiert
+            const playing = data?.isPaused === false;
+            setSwipeMode(playing);
+          });
+        });
+      } catch (e) {
+        console.warn('Spotify IFrame API Fehler/Fallback', e);
+        // Fallback: normales Embed (ohne Zustands-Infos) – Swipe bleibt aus, bis Nutzer manuell aktiviert (nicht vorgesehen)
+        const host = document.getElementById('spotifyHost');
+        host.innerHTML = `<iframe src="https://open.spotify.com/embed/track/${trackId}" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
+        setSwipeMode(false);
+      }
 
       const start = (x,y)=>{
+        if(!swipeEnabled) return; // Swipen nur, wenn Musik läuft
         startX=x; startY=y; dx=0; dy=0; dragging=true; moved=false; interacting=false;
         cardEl.style.transition='none'; setButtons(false);
         clearTimeout(holdTimer);
         holdTimer = setTimeout(()=>{ // Long-Press → kurz interagieren
           interacting = true;
-          frame.style.pointerEvents = 'auto';
+          const frame = cardEl?.querySelector('iframe');
+          if(frame) frame.style.pointerEvents = 'auto';
         }, 550);
       };
       const move  = (x,y)=>{
@@ -347,10 +393,11 @@
         dragging=false;
         clearTimeout(holdTimer);
         if (interacting) {
-          // Interaktion beendet → zurück zu Swipe
+          // Interaktion beendet → zurück zu Swipe (sofern erlaubt)
           interacting = false;
-          frame.style.pointerEvents = 'none';
-          setButtons(true);
+          const frame = cardEl?.querySelector('iframe');
+          if(frame && swipeEnabled) frame.style.pointerEvents = 'none';
+          setButtons(swipeEnabled);
           return;
         }
         cardEl.style.transition='';
@@ -360,7 +407,7 @@
         else {
           cardEl.style.transform = `translate(0px, 0px) rotate(0deg)`;
           badgeLike.style.opacity = badgeNope.style.opacity = 0;
-          setButtons(true);
+          setButtons(swipeEnabled);
         }
       };
 
@@ -402,10 +449,9 @@
         if (index >= songs.length) index = Math.max(0, songs.length - 1);
       }
       const id = songs[index];
-      mountSwipeCard(id);
+      await mountSwipeCard(id);
       updateProgressInfo();
-      setButtons(true);
-      if (songs.length - index - 1 < 15) { ensurePoolHasEnough(200); } // fire & forget
+      // Start-Zustand: erst Play → dann Swipe (Buttons sind via setSwipeMode(false) deaktiviert)
     }
 
     // --- Voting + Undo/Skip ---
@@ -419,10 +465,11 @@
       setTimeout(()=>{ renderCurrent(); }, 150);
       if (navigator.vibrate) { navigator.vibrate(10); }
     }
-    likeBtn.onclick = ()=>{ animateDecision('right'); vote('like'); };
-    nopeBtn.onclick = ()=>{ animateDecision('left');  vote('dislike'); };
-    skipBtn.onclick = ()=>{ index = Math.min(index + 1, songs.length); setDoc(progressRef(uid), { index, updatedAt: serverTimestamp() }, { merge:true }); renderCurrent(); };
+    likeBtn.onclick = ()=>{ if(!swipeEnabled) return; animateDecision('right'); vote('like'); };
+    nopeBtn.onclick = ()=>{ if(!swipeEnabled) return; animateDecision('left');  vote('dislike'); };
+    skipBtn.onclick = ()=>{ if(!swipeEnabled) return; index = Math.min(index + 1, songs.length); setDoc(progressRef(uid), { index, updatedAt: serverTimestamp() }, { merge:true }); renderCurrent(); };
     undoBtn.onclick = async ()=>{
+      if(!swipeEnabled) return;
       const last = history.pop(); if(!last) return;
       index = Math.max(index - 1, 0);
       await setDoc(progressRef(uid), { index, updatedAt: serverTimestamp() }, { merge: true });
