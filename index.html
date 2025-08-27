@@ -107,8 +107,9 @@
     const plHint     = document.getElementById("plHint");
 
     // State
-    let songs = [];
+    let songs = [];       // queue of track IDs
     let index = 0;
+    const likedSeeds = []; // last liked track IDs to improve recs
 
     // UI helpers
     function setVotingEnabled(on) {
@@ -116,12 +117,14 @@
       dislikeBtn.disabled = !on;
     }
 
-    function showSong(i){
-      if(i>=songs.length){
-        songArea.innerHTML = "<p>🎶 Keine weiteren Songs – lade neue…</p>";
-        // Automatisch neue Songs nachladen → „unendlich“
-        reloadSongs();
-        return;
+    async function showSong(i){
+      if(i >= songs.length){
+        songArea.innerHTML = "<p>🎶 Lade neue Empfehlungen …</p>";
+        await topUpSongs();               // try to fetch more
+        if (i >= songs.length) {
+          songArea.innerHTML = "<p>😕 Keine Songs gefunden. Bitte neu laden.</p>";
+          return;
+        }
       }
       const id = songs[i];
       songArea.innerHTML = `<iframe src="https://open.spotify.com/embed/track/${id}" width="320" height="380" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
@@ -135,6 +138,11 @@
       const id = songs[index];
       const ref = doc(db, "votes", id);
       await setDoc(ref, { [uid]: val, updatedAt: serverTimestamp() }, { merge: true });
+      if (val === "like") {
+        likedSeeds.push(id);
+        // nur die letzten 5 Likes als Seeds behalten
+        if (likedSeeds.length > 5) likedSeeds.splice(0, likedSeeds.length - 5);
+      }
       index++;
       showSong(index);
     }
@@ -171,69 +179,53 @@
       return data.access_token;
     }
 
-    // 🎵 Songs laden – robust mit Fallback-Playlisten
-    async function loadSongs() {
-      const token = await getToken();
-      console.log("Spotify Token:", token);
+    // 🎵 Empfehlungen holen (statt Playlists) – funktioniert mit Client Credentials
+    async function fetchRecommendations(token, { seedGenres = [], seedTracks = [] } = {}) {
+      // Fallback-Genres (dürfen max. 5 Seeds insgesamt sein)
+      const genres = seedGenres.length ? seedGenres : ["pop","dance","rock","hip-hop","indie"];
+      const params = new URLSearchParams({
+        limit: "50",
+        market: "DE",
+        seed_genres: genres.slice(0,5).join(",")
+      });
+      if (seedTracks.length) params.set("seed_tracks", seedTracks.slice(0,5).join(","));
 
-      // Mehrere verlässliche öffentliche Playlists (Reihenfolge = Priorität)
-      const playlistIds = [
-        "37i9dQZEVXbMDoHDwVN2tF", // Top 50 Global
-        "37i9dQZEVXbNG2KDcFcKOF", // Viral 50 Global (Fallback)
-        "37i9dQZF1DXcBWIGoYBM5M", // Today's Top Hits
-        "37i9dQZEVXbJiZcmkrIHGU"  // Top 50 Germany
-      ];
-
-      const headers = {
-        "Authorization": "Bearer " + token,
-        "Accept": "application/json"
-      };
-
-      let all = [];
-
-      for (const pid of playlistIds) {
-        try {
-          const url = `https://api.spotify.com/v1/playlists/${pid}/tracks?limit=100&market=DE&fields=items(track(id))`;
-          const res = await fetch(url, { headers });
-          if (!res.ok) {
-            console.warn(`Playlist ${pid} -> HTTP ${res.status}`);
-            continue;
-          }
-          const data = await res.json();
-          const ids = (data.items || [])
-            .map(it => it?.track?.id)
-            .filter(Boolean);
-          console.log(`Loaded ${ids.length} tracks from ${pid}`);
-          all = all.concat(ids);
-        } catch (e) {
-          console.warn(`Error loading ${pid}:`, e);
-        }
+      const url = `https://api.spotify.com/v1/recommendations?${params.toString()}`;
+      const res = await fetch(url, {
+        headers: { "Authorization": "Bearer " + token, "Accept": "application/json" }
+      });
+      if (!res.ok) {
+        console.warn("Recommendations HTTP", res.status);
+        return [];
       }
-
-      // Deduplizieren & mischen
-      const uniq = Array.from(new Set(all));
-      for (let i = uniq.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [uniq[i], uniq[j]] = [uniq[j], uniq[i]];
-      }
-      return uniq;
+      const data = await res.json();
+      return (data.tracks || []).map(t => t.id).filter(Boolean);
     }
 
-    async function reloadSongs(){
-      setVotingEnabled(false);
-      const list = await loadSongs();
-      if (list.length === 0) {
-        songArea.innerHTML = "<p>Konnte keine Songs laden. Prüfe Token/Playlist-IDs.</p>";
-        return;
+    // Queue auffüllen (dedupe + leicht mischen)
+    async function topUpSongs(){
+      const token = await getToken();
+      const recs = await fetchRecommendations(token, { seedTracks: likedSeeds });
+      const set = new Set(songs);
+      const fresh = [];
+      for (const id of recs) if (!set.has(id)) { set.add(id); fresh.push(id); }
+      // leicht mischen
+      for (let i = fresh.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [fresh[i], fresh[j]] = [fresh[j], fresh[i]];
       }
-      songs = list;
-      index = 0;
-      setupPlaylistListener(songs);
-      showSong(index);
+      if (fresh.length) {
+        songs = songs.concat(fresh);
+        setupPlaylistListener(fresh);
+      }
     }
 
     // Start
-    reloadSongs();
+    (async () => {
+      await topUpSongs();   // initiale Empfehlungen
+      index = 0;
+      showSong(index);
+    })();
   </script>
 </body>
 </html>
