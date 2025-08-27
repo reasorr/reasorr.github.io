@@ -387,49 +387,104 @@
     let cardEl=null, badgeLike=null, badgeNope=null, audioEl=null, playing=false;
     let startX=0, startY=0, dx=0, dy=0, dragging=false;
 
-    function mountSwipeCard(meta){
-      const { id, preview, cover, title, artist, link } = meta;
-      songArea.innerHTML = `
-        <div class="swipe-wrap">
-          <div class="swipe-card" id="swipeCard">
-            <div class="badge like" id="badgeLike">LIKE</div>
-            <div class="badge nope" id="badgeNope">NOPE</div>
+    // ERSETZEN: mountSwipeCard(...) – benutzt wieder den Spotify-Embed + Long-Press
+function mountSwipeCard(meta){
+  const id     = meta?.id || (typeof meta === 'string' ? meta : null);
+  const title  = meta?.title || '';
+  const artist = meta?.artist || '';
+  const link   = meta?.link || (id ? `https://open.spotify.com/track/${id}` : '#');
 
-            <div class="cover">
-              ${cover ? `<img src="${cover}" alt="">` : `<div class="muted">kein Cover</div>`}
-              <button id="playBtn" class="playbtn">${preview ? '▶︎ Abspielen' : '↗︎ In Spotify öffnen'}</button>
-            </div>
+  if (!id) { songArea.textContent = "🎶 Lade Song …"; return; }
 
-            <div class="meta">
-              <div>
-                <div class="title">${title || '–'}</div>
-                <div class="artist">${artist || ''}</div>
-              </div>
-              <button class="open" onclick="window.open('${link}','_blank')">Open in Spotify</button>
-            </div>
+  songArea.innerHTML = `
+    <div class="swipe-wrap">
+      <div class="swipe-card" id="swipeCard">
+        <div class="badge like" id="badgeLike">LIKE</div>
+        <div class="badge nope" id="badgeNope">NOPE</div>
+        <iframe id="spotifyFrame"
+          src="https://open.spotify.com/embed/track/${id}"
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+        <div class="meta">
+          <div>
+            <div class="title">${title || '–'}</div>
+            <div class="artist">${artist || ''}</div>
           </div>
-        </div>`;
-      cardEl = document.getElementById("swipeCard");
-      badgeLike = document.getElementById("badgeLike");
-      badgeNope = document.getElementById("badgeNope");
-      const playBtn = document.getElementById("playBtn");
+          <button class="open" onclick="window.open('${link}','_blank')">Open in Spotify</button>
+        </div>
+      </div>
+    </div>`;
 
-      // prepare audio
-      if (audioEl) { try { audioEl.pause(); } catch{} }
-      audioEl = null; playing = false;
-      if (preview) {
-        audioEl = new Audio(preview);
-        audioEl.preload = 'none';
-        audioEl.onended = ()=>{ playing=false; playBtn.textContent='▶︎ Abspielen'; };
-        playBtn.onclick = async (e)=>{ e.stopPropagation();
-          try {
-            if (!playing) { await audioEl.play(); playing=true; playBtn.textContent='⏸︎ Pause'; }
-            else { audioEl.pause(); playing=false; playBtn.textContent='▶︎ Abspielen'; }
-          } catch (err) { alert('Konnte Audio nicht starten (Autoplay blockiert). Tippe nochmal auf Abspielen.'); }
-        };
-      } else {
-        playBtn.onclick = (e)=>{ e.stopPropagation(); window.open(link, '_blank'); };
-      }
+  const cardEl    = document.getElementById("swipeCard");
+  const frame     = document.getElementById("spotifyFrame");
+  const badgeLike = document.getElementById("badgeLike");
+  const badgeNope = document.getElementById("badgeNope");
+
+  // Standard: Swipe aktiv → Embed nimmt keine Touches an
+  frame.style.pointerEvents = 'none';
+
+  let startX=0, startY=0, dx=0, dy=0, dragging=false, moved=false;
+  let holdTimer=null, interacting=false, interactTimeout=null;
+
+  const onStart = (x,y)=>{
+    startX=x; startY=y; dx=0; dy=0; dragging=true; moved=false; interacting=false;
+    cardEl.style.transition='none'; setButtons(false);
+    clearTimeout(holdTimer);
+    holdTimer = setTimeout(()=>{ // Long-Press → Interaktion im Embed erlauben
+      interacting = true;
+      frame.style.pointerEvents = 'auto';
+      setButtons(true); // Buttons wieder aktiv, aber Swipen pausiert solange
+    }, 550);
+  };
+
+  const onMove  = (x,y)=>{
+    if(!dragging) return;
+    dx = x-startX; dy = y-startY;
+    if (!moved && (Math.abs(dx)>8 || Math.abs(dy)>8)) { moved=true; clearTimeout(holdTimer); }
+    if (interacting) return; // beim Interagieren kein Swipe
+    const rot = Math.max(-15, Math.min(15, dx/10));
+    cardEl.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
+    const s = Math.min(1, Math.abs(dx)/90);
+    if (dx>0){ badgeLike.style.opacity = s; badgeNope.style.opacity = 0; }
+    else if (dx<0){ badgeNope.style.opacity = s; badgeLike.style.opacity = 0; }
+    else { badgeLike.style.opacity=badgeNope.style.opacity=0; }
+  };
+
+  const onEnd = ()=>{
+    if(!dragging) return;
+    dragging=false;
+    clearTimeout(holdTimer);
+    cardEl.style.transition='';
+
+    if (interacting){
+      // Nach Long-Press: Embed bleibt kurz bedienbar, dann zurück zu Swipe
+      clearTimeout(interactTimeout);
+      interactTimeout = setTimeout(()=>{
+        frame.style.pointerEvents = 'none';
+        interacting = false;
+      }, 4000); // Fenster zum Tippen im Player (4s)
+      setButtons(true);
+      return;
+    }
+
+    const threshold = 90;
+    if (dx > threshold)      { animateDecision('right'); vote('like'); }
+    else if (dx < -threshold){ animateDecision('left');  vote('dislike'); }
+    else {
+      cardEl.style.transform = `translate(0px, 0px) rotate(0deg)`;
+      badgeLike.style.opacity = badgeNope.style.opacity = 0;
+      setButtons(true);
+    }
+  };
+
+  // Touch + Maus
+  cardEl.addEventListener('touchstart', e=>{ const t=e.touches[0]; onStart(t.clientX,t.clientY); }, {passive:true});
+  cardEl.addEventListener('touchmove',  e=>{ const t=e.touches[0]; onMove(t.clientX,t.clientY); }, {passive:true});
+  cardEl.addEventListener('touchend', onEnd);
+  cardEl.addEventListener('mousedown', e=>{ onStart(e.clientX,e.clientY); });
+  window.addEventListener('mousemove', e=>{ onMove(e.clientX,e.clientY); });
+  window.addEventListener('mouseup', onEnd);
+}
+
 
       // gestures
       const onStart = (x,y)=>{ startX=x; startY=y; dx=0; dy=0; dragging=true; cardEl.style.transition='none'; setButtons(false); };
