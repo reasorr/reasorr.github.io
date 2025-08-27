@@ -39,16 +39,12 @@
     .swipe-wrap { position:relative; height:460px; display:flex; align-items:center; justify-content:center; touch-action:pan-y; }
     .swipe-card {
       position:absolute; width:min(360px,92vw); height:420px; border-radius:16px; overflow:hidden;
-      box-shadow:0 10px 30px rgba(0,0,0,.35); background:#0f1520;
+      box-shadow:0 10px 30px rgba(0,0,0,.35);
       transition: transform .25s ease, opacity .25s ease; touch-action: none; animation: popin .25s ease;
-      display:flex; flex-direction:column; justify-content:space-between;
+      display:flex; align-items:stretch; justify-content:flex-end;
+      background:#000 center/cover no-repeat;
     }
     @keyframes popin { from{ transform:scale(.96); opacity:.0 } to{ transform:scale(1); opacity:1 } }
-
-    .meta { height:22%; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
-    .title { font-weight:700; font-size:14px; }
-    .artist { font-size:12px; opacity:.8; }
-    .open { background:#1f2a3a; border:none; color:#fff; border-radius:10px; padding:8px 12px; cursor:pointer; }
 
     .badge { position:absolute; top:12px; padding:6px 10px; border-radius:8px; font-weight:800; letter-spacing:.5px; opacity:0; transition:opacity .12s ease; pointer-events:none; }
     .badge.like { left:12px; background:rgba(46,204,113,.9); }
@@ -240,15 +236,18 @@
           if (!members.includes(uid) && members.length < 2) {
             await setDoc(roomDoc(roomId), { members: [...members, uid], updatedAt: serverTimestamp() }, { merge: true });
           }
-          return;
+          return; // existing room ok
         }
       }
-      // Neuen Room anlegen
+      // Create new room for you
       roomId = Math.random().toString(36).slice(2,10) + Math.random().toString(36).slice(2,10);
       await setDoc(roomDoc(roomId), { members: [uid], createdAt: serverTimestamp() });
       await setDoc(roomPoolDoc(roomId), { ids: [], updatedAt: serverTimestamp() }, { merge: true });
 
-      // URL aktualisieren (fallback)
+      // Seed immediately so songs show up even without invite
+      await ensurePoolHasEnough(200);
+
+      // Update URL robustly (or redirect fallback)
       const url = new URL(window.location.href);
       url.searchParams.set('r', roomId);
       if (window.history && typeof window.history.replaceState === 'function') {
@@ -274,20 +273,16 @@
       uid = user.uid;
       document.documentElement.classList.add('auth-ok');
 
-      // Room festlegen/beitreten
       await resolveRoomAfterLogin(uid);
 
-      // Progress laden
       const psnap = await getDoc(roomProgressDoc(roomId, uid));
       index = psnap.exists() ? (psnap.data().index || 0) : 0;
 
-      // Pool sicherstellen & laden
       await ensurePoolHasEnough(200);
       await reloadSongsFromPool();
       setupPlaylistListenersFor(songs);
       renderCurrent();
 
-      // Live-Updates des Pools
       onSnapshot(roomPoolDoc(roomId), (snap)=>{
         const data = snap.exists() ? snap.data() : null;
         const ids = data?.ids || [];
@@ -299,19 +294,20 @@
       });
     });
 
-    /* ---------- Spotify-Helpers ---------- */
+    /* ---------- Spotify helpers ---------- */
     async function getToken() {
-      const res = await fetch("https://reasorr-github-io.vercel.app/api/token"); // ggf. anpassen
+      const res = await fetch("https://reasorr-github-io.vercel.app/api/token"); // <- deine Vercel-URL
       const data = await res.json();
       return data.access_token;
     }
     async function searchTracks(token, query, limit=50) {
-      const offset = Math.floor(Math.random() * 10) * 50;
+      const offset = Math.floor(Math.random() * 10) * 50; // 0..450
       const url = `https://api.spotify.com/v1/search?type=track&limit=${limit}&offset=${offset}&market=DE&q=${encodeURIComponent(query)}`;
       const res = await fetch(url, { headers: { "Authorization": "Bearer " + token } });
       if (!res.ok) { console.warn("Search HTTP", res.status, query); return []; }
       const data = await res.json();
-      return (data.tracks?.items || []).map(t => t.id).filter(Boolean);
+      // keep only tracks that actually have a 30s preview so autoplay works
+      return (data.tracks?.items || []).filter(t => !!t.preview_url).map(t => t.id);
     }
     async function buildBatch() {
       const token = await getToken();
@@ -320,6 +316,7 @@
         'rock year:2019-2025','indie year:2019-2025','house year:2020-2025','r&b year:2020-2025'
       ];
       const seen = new Set(); const out = [];
+      // two passes to gather more unique preview-able tracks
       for (let round = 0; round < 2; round++) {
         for (const q of queries) {
           const ids = await searchTracks(token, q, 50);
@@ -342,7 +339,7 @@
       songs = snap.exists() ? (snap.data().ids || []) : [];
     }
 
-    // Track Meta (für Titel/Artist/Link; Embed spielt den Ton)
+    // Track Meta with title/artist/cover/link/preview
     const metaCache = new Map();
     async function getTrackMeta(id){
       if (metaCache.has(id)) return metaCache.get(id);
@@ -350,17 +347,15 @@
       const res = await fetch(`https://api.spotify.com/v1/tracks/${id}?market=DE`, {
         headers: { "Authorization":"Bearer "+token }
       });
-      if (!res.ok) {
-        const meta = { id, title:"", artist:"", link:`https://open.spotify.com/track/${id}` };
-        metaCache.set(id, meta); return meta;
+      const meta = { id, title:"", artist:"", link:`https://open.spotify.com/track/${id}`, cover:null, preview:null };
+      if (res.ok) {
+        const t = await res.json();
+        meta.title   = t.name || "";
+        meta.artist  = (t.artists||[]).map(a=>a.name).join(", ");
+        meta.link    = t.external_urls?.spotify || meta.link;
+        meta.cover   = t.album?.images?.[0]?.url || null;
+        meta.preview = t.preview_url || null;
       }
-      const t = await res.json();
-      const meta = {
-        id,
-        title: t.name || "",
-        artist: (t.artists||[]).map(a=>a.name).join(", "),
-        link: t.external_urls?.spotify || `https://open.spotify.com/track/${id}`
-      };
       metaCache.set(id, meta);
       return meta;
     }
@@ -369,60 +364,82 @@
     function setButtons(on){ [likeBtn,nopeBtn,undoBtn,skipBtn].forEach(b=>b.disabled=!on); }
     function updateProgressInfo(){ progressInfo.textContent = songs.length ? `Song ${Math.min(index+1,songs.length)} / ${songs.length}` : '–'; }
 
-    /* ---------- Swipe + Embed (Long-Press für Interaktion) ---------- */
+    /* ---------- Autoplay unlock (first user gesture) ---------- */
+    let audioEl = null;
+    let canAutoplay = false;
+    function unlockAutoplayOnce(){
+      canAutoplay = true;
+      document.removeEventListener('touchstart', unlockAutoplayOnce, true);
+      document.removeEventListener('mousedown', unlockAutoplayOnce, true);
+    }
+    document.addEventListener('touchstart', unlockAutoplayOnce, true);
+    document.addEventListener('mousedown', unlockAutoplayOnce, true);
+
+    /* ---------- Swipe + full-cover card + preview audio ---------- */
     let cardEl=null, badgeLike=null, badgeNope=null;
     let startX=0, startY=0, dx=0, dy=0, dragging=false;
 
     function mountSwipeCard(meta){
-      const id     = meta?.id || (typeof meta === 'string' ? meta : null);
-      const title  = meta?.title || '';
-      const artist = meta?.artist || '';
-      const link   = meta?.link || (id ? `https://open.spotify.com/track/${id}` : '#');
+      const { id, title, artist, link, cover, preview } = meta || {};
       if (!id) { songArea.textContent = "🎶 Lade Song …"; return; }
+
+      try { audioEl && audioEl.pause(); } catch {}
+      audioEl = null;
 
       songArea.innerHTML = `
         <div class="swipe-wrap">
-          <div class="swipe-card" id="swipeCard">
+          <div class="swipe-card" id="swipeCard" style="background-image:url('${cover || ''}')">
             <div class="badge like" id="badgeLike">LIKE</div>
             <div class="badge nope" id="badgeNope">NOPE</div>
-            <iframe id="spotifyFrame"
-              src="https://open.spotify.com/embed/track/${id}"
-              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
-            <div class="meta">
-              <div>
-                <div class="title">${title || '–'}</div>
-                <div class="artist">${artist || ''}</div>
+
+            <!-- bottom gradient overlay -->
+            <div style="position:absolute; inset:0;
+              background:linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(0,0,0,.85) 100%);">
+            </div>
+
+            <!-- meta/footer -->
+            <div style="position:absolute; left:12px; right:12px; bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+              <div style="max-width:70%;">
+                <div class="title" style="font-size:16px;">${title || '–'}</div>
+                <div class="artist" style="font-size:12px;opacity:.85">${artist || ''}</div>
               </div>
-              <button class="open" onclick="window.open('${link}','_blank')">Open in Spotify</button>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <button id="playBtn" class="tb-btn">${preview ? '▶︎' : '↗︎'}</button>
+                <button class="tb-btn" onclick="window.open('${link}','_blank')">Open</button>
+              </div>
             </div>
           </div>
         </div>`;
 
-      // WICHTIG: globale Variablen setzen (nicht neu deklarieren),
-      // damit animateDecision() dieselbe Referenz hat
       cardEl    = document.getElementById("swipeCard");
       badgeLike = document.getElementById("badgeLike");
       badgeNope = document.getElementById("badgeNope");
-      const frame = document.getElementById("spotifyFrame");
-      frame.style.pointerEvents = 'none'; // Standard: Swipe
+      const playBtn = document.getElementById('playBtn');
 
-      let moved=false, holdTimer=null, interacting=false, interactTimeout=null;
+      if (preview) {
+        audioEl = new Audio(preview);
+        audioEl.preload = 'none';
+        audioEl.onended = ()=>{ playBtn.textContent = '▶︎'; };
+        if (canAutoplay) {
+          audioEl.play().then(()=>{ playBtn.textContent='⏸︎'; }).catch(()=>{});
+        }
+        playBtn.onclick = (e)=>{ e.stopPropagation();
+          if (!audioEl) return;
+          if (audioEl.paused) {
+            audioEl.play().then(()=>{ playBtn.textContent='⏸︎'; }).catch(()=>{});
+          } else { audioEl.pause(); playBtn.textContent='▶︎'; }
+        };
+      } else {
+        playBtn.onclick = (e)=>{ e.stopPropagation(); window.open(link,'_blank'); };
+      }
 
-      const onStart = (x,y)=>{
-        startX=x; startY=y; dx=0; dy=0; dragging=true; moved=false; interacting=false;
-        cardEl.style.transition='none'; setButtons(false);
-        clearTimeout(holdTimer);
-        holdTimer = setTimeout(()=>{ // Long-Press → Player bedienbar
-          interacting = true;
-          frame.style.pointerEvents = 'auto';
-          setButtons(true);
-        }, 550);
-      };
+      // swipe gestures
+      let moved=false;
+      const onStart = (x,y)=>{ startX=x; startY=y; dx=0; dy=0; dragging=true; moved=false; cardEl.style.transition='none'; setButtons(false); };
       const onMove  = (x,y)=>{
         if(!dragging) return;
         dx = x-startX; dy = y-startY;
-        if (!moved && (Math.abs(dx)>8 || Math.abs(dy)>8)) { moved=true; clearTimeout(holdTimer); }
-        if (interacting) return;
+        if (!moved && (Math.abs(dx)>4 || Math.abs(dy)>4)) { moved=true; }
         const rot = Math.max(-15, Math.min(15, dx/10));
         cardEl.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
         const s = Math.min(1, Math.abs(dx)/90);
@@ -432,18 +449,10 @@
       };
       const onEnd = ()=>{
         if(!dragging) return;
-        dragging=false;
-        clearTimeout(holdTimer);
-        cardEl.style.transition='';
-        if (interacting){
-          clearTimeout(interactTimeout);
-          interactTimeout = setTimeout(()=>{ frame.style.pointerEvents = 'none'; interacting = false; }, 4000);
-          setButtons(true);
-          return;
-        }
+        dragging=false; cardEl.style.transition='';
         const threshold = 90;
-        if (dx > threshold)      { animateDecision('right'); vote('like'); }
-        else if (dx < -threshold){ animateDecision('left');  vote('dislike'); }
+        if (dx > threshold)      { try{audioEl&&audioEl.pause();}catch{}; animateDecision('right'); vote('like'); }
+        else if (dx < -threshold){ try{audioEl&&audioEl.pause();}catch{}; animateDecision('left');  vote('dislike'); }
         else {
           cardEl.style.transform = `translate(0px, 0px) rotate(0deg)`;
           badgeLike.style.opacity = badgeNope.style.opacity = 0;
@@ -451,7 +460,6 @@
         }
       };
 
-      // Touch + Maus
       cardEl.addEventListener('touchstart', e=>{ const t=e.touches[0]; onStart(t.clientX,t.clientY); }, {passive:true});
       cardEl.addEventListener('touchmove',  e=>{ const t=e.touches[0]; onMove(t.clientX,t.clientY); }, {passive:true});
       cardEl.addEventListener('touchend', onEnd);
@@ -489,7 +497,8 @@
       updateProgressInfo();
       setButtons(true);
 
-      if (songs.length - index - 1 < 15) { ensurePoolHasEnough(200); } // fire & forget
+      // proactively top-up when near end
+      if (songs.length - index - 1 < 15) { ensurePoolHasEnough(200); }
     }
 
     /* ---------- Voting + Undo/Skip ---------- */
