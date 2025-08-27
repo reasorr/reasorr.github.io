@@ -78,10 +78,11 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-    import { getFirestore, doc, setDoc, onSnapshot, serverTimestamp }
-      from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+    import {
+      getFirestore, doc, setDoc, getDoc, onSnapshot, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
-    // 🔑 Firebase Config (dein Projekt)
+    // 🔑 Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyCOYv05V2jXiDYPjc1MlT_WdpgLfW4aJJo",
       authDomain: "songmatch-850c7.firebaseapp.com",
@@ -107,43 +108,93 @@
     const plHint     = document.getElementById("plHint");
 
     // State
-    let songs = [];        // queue of track IDs
-    let index = 0;
-    const likedSeeds = []; // keep last few liked tracks (optional future use)
+    let songs = [];  // gemeinsame Queue aus Firestore
+    let index = 0;   // persönlicher Fortschritt
 
-    // UI helpers
-    function setVotingEnabled(on) {
-      likeBtn.disabled = !on;
-      dislikeBtn.disabled = !on;
+    // —— Spotify Token vom Backend ——
+    async function getToken() {
+      const res = await fetch("https://reasorr-github-io.vercel.app/api/token"); // ggf. URL anpassen
+      const data = await res.json();
+      return data.access_token;
     }
 
-    async function showSong(i){
-      if(i >= songs.length){
-        songArea.innerHTML = "<p>🎶 Lade neue Songs …</p>";
-        await topUpSongs();               // fetch more
-        if (i >= songs.length) {
-          songArea.innerHTML = "<p>😕 Keine Songs gefunden. Bitte neu laden.</p>";
-          return;
-        }
+    // —— SEARCH Loader (erlaubt mit Client-Credentials) ——
+    async function searchTracks(token, query, limit=50) {
+      const offset = Math.floor(Math.random() * 10) * 50; // 0..450
+      const url = `https://api.spotify.com/v1/search?type=track&limit=${limit}&offset=${offset}&market=DE&q=${encodeURIComponent(query)}`;
+      const res = await fetch(url, { headers: { "Authorization": "Bearer " + token } });
+      if (!res.ok) { console.warn("Search HTTP", res.status, query); return []; }
+      const data = await res.json();
+      return (data.tracks?.items || []).map(t => t.id).filter(Boolean);
+    }
+
+    async function buildBatch() {
+      const token = await getToken();
+      const queries = [
+        'pop year:2022-2025','hip hop year:2022-2025','dance year:2021-2025',
+        'rock year:2019-2025','indie year:2019-2025','house year:2020-2025','r&b year:2020-2025'
+      ];
+      let pool = [];
+      for (const q of queries) pool = pool.concat(await searchTracks(token, q, 50));
+      // dedupe, Reihenfolge beibehalten
+      const seen = new Set(); const out = [];
+      for (const id of pool) if (!seen.has(id)) { seen.add(id); out.push(id); }
+      return out;
+    }
+
+    // —— Gemeinsamer Pool in Firestore ——
+    const poolRef = doc(db, "config", "pool"); // { ids: string[] }
+
+    // Pool lesen + live aktualisieren
+    onSnapshot(poolRef, (snap) => {
+      const data = snap.exists() ? snap.data() : null;
+      const ids = data?.ids || [];
+      if (ids.length) {
+        songs = ids;                            // gleiche Reihenfolge für alle
+        if (index >= songs.length) index = songs.length - 1;
+        renderCurrent();
       }
-      const id = songs[i];
+    });
+
+    // Pool initial anlegen (falls leer) oder bei Bedarf auffüllen
+    async function ensurePoolHasEnough(minCount = 200) {
+      const snap = await getDoc(poolRef);
+      let ids = snap.exists() ? (snap.data().ids || []) : [];
+      if (ids.length >= minCount) return;
+
+      const batch = await buildBatch();
+      // an vorhandene Liste anhängen, Duplikate vermeiden
+      const set = new Set(ids);
+      for (const id of batch) if (!set.has(id)) { set.add(id); ids.push(id); }
+
+      await setDoc(poolRef, { ids, updatedAt: serverTimestamp() }, { merge: true });
+    }
+
+    // —— UI / Voting ——
+    function setVotingEnabled(on) { likeBtn.disabled = !on; dislikeBtn.disabled = !on; }
+
+    function renderCurrent(){
+      if (!songs.length) { songArea.innerHTML = "<p>🎶 Lade Songs …</p>"; return; }
+      const id = songs[index] || songs[songs.length-1];
       songArea.innerHTML = `<iframe src="https://open.spotify.com/embed/track/${id}" width="320" height="380" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
       setVotingEnabled(true);
+      // wenn wir ans Ende kommen, Pool aufstocken
+      const remaining = songs.length - index - 1;
+      if (remaining < 15) ensurePoolHasEnough(200);
     }
 
-    // Vote speichern + lokal weiterschalten
     async function vote(val){
       if(!uid){ alert("Noch nicht verbunden, bitte kurz warten!"); return; }
       setVotingEnabled(false);
       const id = songs[index];
       const ref = doc(db, "votes", id);
       await setDoc(ref, { [uid]: val, updatedAt: serverTimestamp() }, { merge: true });
-      if (val === "like") {
-        likedSeeds.push(id);
-        if (likedSeeds.length > 5) likedSeeds.splice(0, likedSeeds.length - 5);
+      index = Math.min(index + 1, songs.length); // persönlicher Fortschritt
+      if (index >= songs.length) {
+        songArea.innerHTML = "<p>🎶 Ende der Liste – fülle auf …</p>";
+        await ensurePoolHasEnough(200);
       }
-      index++;
-      showSong(index);
+      renderCurrent();
     }
     likeBtn.onclick = () => vote("like");
     dislikeBtn.onclick = () => vote("dislike");
@@ -159,7 +210,7 @@
           if(vals.length >= 2 && vals.every(v => v==="like")){
             if(!document.getElementById("pl-"+id)){
               const iframe = document.createElement("iframe");
-              iframe.id   = "pl-"+id;
+              iframe.id   = "pl-"+id";
               iframe.width = "100%";
               iframe.height = "80";
               iframe.src = `https://open.spotify.com/embed/track/${id}`;
@@ -171,65 +222,15 @@
       });
     }
 
-    // 🔑 Spotify-Token über dein Vercel-Backend holen (URL ggf. anpassen)
-    async function getToken() {
-      const res = await fetch("https://reasorr-github-io.vercel.app/api/token");
-      const data = await res.json();
-      return data.access_token;
-    }
-
-    // ---- Spotify SEARCH loader (works with client-credentials) ----
-    async function searchTracks(token, query, limit=50) {
-      // randomize offset a bit to avoid always the same results
-      const offset = Math.floor(Math.random() * 10) * 50; // 0..450
-      const url = `https://api.spotify.com/v1/search?type=track&limit=${limit}&offset=${offset}&market=DE&q=${encodeURIComponent(query)}`;
-      const res = await fetch(url, { headers: { "Authorization": "Bearer " + token } });
-      if (!res.ok) { console.warn("Search HTTP", res.status, query); return []; }
-      const data = await res.json();
-      return (data.tracks?.items || []).map(t => t.id).filter(Boolean);
-    }
-
-    // Queue auffüllen (nur Search; no editorial/algorithmic/recommendations)
-    async function topUpSongs(){
-      const token = await getToken();
-
-      // Broad queries (use simple words + year filter = supported)
-      const queries = [
-        'pop year:2022-2025',
-        'hip hop year:2022-2025',
-        'dance year:2021-2025',
-        'rock year:2019-2025',
-        'indie year:2019-2025',
-        'house year:2020-2025',
-        'r&b year:2020-2025'
-      ];
-
-      let pool = [];
-      for (const q of queries) {
-        const ids = await searchTracks(token, q, 50);
-        pool = pool.concat(ids);
-      }
-
-      // Deduplicate + shuffle
-      const set = new Set(songs);
-      const fresh = [];
-      for (const id of pool) if (!set.has(id)) { set.add(id); fresh.push(id); }
-      for (let i = fresh.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [fresh[i], fresh[j]] = [fresh[j], fresh[i]];
-      }
-
-      if (fresh.length) {
-        songs = songs.concat(fresh);
-        setupPlaylistListener(fresh);
-      }
-    }
-
-    // Start
+    // Start: Pool anlegen/auffüllen, dann UI rendern
     (async () => {
-      await topUpSongs();   // initiales Füllen
+      await ensurePoolHasEnough(200);
+      const snap = await getDoc(poolRef);
+      const ids = snap.exists() ? (snap.data().ids || []) : [];
+      songs = ids;
+      setupPlaylistListener(songs);
       index = 0;
-      showSong(index);
+      renderCurrent();
     })();
   </script>
 </body>
