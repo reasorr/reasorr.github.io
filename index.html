@@ -239,17 +239,31 @@
     function roomVoteDoc(id, trackId){ return doc(db, "rooms", id, "votes", trackId); }
 
     async function resolveRoomAfterLogin(uid){
-      if (roomId) {
-        // Bestehenden Room joinen (self-join erlaubt durch Rules)
-        const rs = await getDoc(roomDoc(roomId));
-        if (rs.exists()) {
-          const members = rs.data().members || [];
-          if (!members.includes(uid) && members.length < 2) {
-            await setDoc(roomDoc(roomId), { members: [...members, uid], updatedAt: serverTimestamp() }, { merge: true });
-          }
-          return;
-        }
+  if (roomId) {
+    const rs = await getDoc(roomDoc(roomId));
+    if (rs.exists()) {
+      const members = rs.data().members || [];
+      if (!members.includes(uid) && members.length < 2) {
+        await setDoc(roomDoc(roomId), { members: [...members, uid], updatedAt: serverTimestamp() }, { merge: true });
       }
+      return;
+    }
+  }
+  // Neuen Room anlegen
+  roomId = Math.random().toString(36).slice(2,10) + Math.random().toString(36).slice(2,10);
+  await setDoc(roomDoc(roomId), { members: [uid], createdAt: serverTimestamp() });
+  await setDoc(roomPoolDoc(roomId), { ids: [], updatedAt: serverTimestamp() }, { merge: true });
+
+  // URL aktualisieren (fallback auf Redirect, falls replaceState fehlt)
+  const url = new URL(window.location.href);
+  url.searchParams.set('r', roomId);
+  if (window.history && typeof window.history.replaceState === 'function') {
+    window.history.replaceState({}, '', url.toString());
+  } else {
+    window.location.href = url.toString();
+  }
+}
+
       // Neuen Room anlegen
       roomId = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10);
       await setDoc(roomDoc(roomId), {
