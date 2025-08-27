@@ -142,27 +142,31 @@
     }
 
     async function loadSongs() {
-      const token = await getToken();
+  const token = await getToken();
+  console.log("Spotify Token:", token); // Debug
 
-      const playlists = [
-      "37i9dQZEVXbMDoHDwVN2tF", // Top 50 Global
-      "37i9dQZEVXbNG2KDcFcKOF"  // Viral 50 Global
-      ];
+  const playlists = [
+    "37i9dQZEVXbMDoHDwVN2tF" // Top 50 Global
+  ];
 
+  let allSongs = [];
 
-      let allSongs = [];
+  for (const pid of playlists) {
+    const res = await fetch(`https://api.spotify.com/v1/playlists/${pid}/tracks`, {
+      headers: { "Authorization": "Bearer " + token }
+    });
+    const data = await res.json();
+    console.log("Playlist data:", data); // Debug
 
-      for (const pid of playlists) {
-        const res = await fetch(`https://api.spotify.com/v1/playlists/${pid}/tracks`, {
-          headers: { "Authorization": "Bearer " + token }
-        });
-        const data = await res.json();
+    if (data.items) {
+      const ids = data.items.map(item => item.track.id);
+      allSongs = allSongs.concat(ids);
+    }
+  }
 
-        if (data.items) {
-          const ids = data.items.map(item => item.track.id);
-          allSongs = allSongs.concat(ids);
-        }
-      }
+  return allSongs;
+}
+
 
       return allSongs;
     }
