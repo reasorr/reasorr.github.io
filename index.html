@@ -66,6 +66,11 @@
     .gesture-gutter.left { left:0; }
     .gesture-gutter.right { right:0; }
     .round.play { background:#2563eb; }
+    /* Swipe-Topzone und Playbar */
+    .gesture-top { position:absolute; left:0; right:0; top:0; height:72%; pointer-events:auto; touch-action:none; z-index:6; }
+    .playbar { margin-top:12px; display:flex; justify-content:center; }
+    .playbar-btn { width:min(360px,92vw); border-radius:999px; padding:14px 16px; background:#1f2a3a; color:#fff; border:none; font-weight:700; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.25); }
+    .playbar-btn:active { transform: translateY(1px); }
   </style>
 </head>
 <body>
@@ -111,14 +116,7 @@
         </div>
 
         <div id="songArea" class="muted" style="min-height:420px">lädt Songs …</div>
-
-        <div class="row">
-          <button id="undoBtn" class="round undo" title="Undo">↩️</button>
-          <button id="playPauseBtn" class="round play" title="Play/Pause">⏯️</button>
-          <button id="nopeBtn" class="round nope" title="Nope" disabled>✖️</button>
-          <button id="likeBtn" class="round like" title="Like" disabled>❤️</button>
-          <button id="skipBtn" class="round skip" title="Skip" disabled>⏭️</button>
-        </div>
+        <div class="playbar"><button id="playBarBtn" class="playbar-btn" title="Play/Pause">▶️ Tippen zum Abspielen</button></div>
       </div>
 
       <div class="panel">
@@ -191,11 +189,11 @@
     const plHint     = document.getElementById("plHint");
     const progressInfo = document.getElementById("progressInfo");
 
-    const playBtn = document.getElementById("playPauseBtn");
-    const updatePlayBtn = (playing)=>{ if(!playBtn) return; playBtn.textContent = playing ? '⏸️' : '▶️'; };
-    if (playBtn) playBtn.onclick = ()=>{ try { embedCtrl && embedCtrl.togglePlay && embedCtrl.togglePlay(); } catch(e){} };
+    const playBarBtn = document.getElementById("playBarBtn");
+    const updatePlayBtn = (playing)=>{ if(!playBarBtn) return; playBarBtn.textContent = playing ? '⏸️ Tippen zum Pausieren' : '▶️ Tippen zum Abspielen'; };
+    if (playBarBtn) playBarBtn.onclick = ()=>{ try { if (embedCtrl?.togglePlay) embedCtrl.togglePlay(); } catch(e){} };
 
-    // Buttons grundsätzlich aktiv halten
+    // keine weiteren Buttons – Swipe only
     setButtons && setButtons(true);
 
     // --- Username login (email = username@sm.local) ---
@@ -312,7 +310,7 @@
     let embedCtrl = null; // aktueller EmbedController
 
     // --- UI helpers ---
-    function setButtons(on){ [likeBtn,nopeBtn,undoBtn,skipBtn].forEach(b=>b.disabled=!on); }
+    function setButtons(on){ /* no-op: Buttons entfernt, Swipe only */ }
     function updateProgressInfo(){
       progressInfo.textContent = songs.length ? `Song ${Math.min(index+1,songs.length)} / ${songs.length}` : '–';
     }
@@ -338,20 +336,14 @@
             <div class="badge like" id="badgeLike">LIKE</div>
             <div class="badge nope" id="badgeNope">NOPE</div>
             <div id="spotifyHost" style="width:100%;height:100%"></div>
-            <div id="swipeHint" class="tiny" style="position:absolute;bottom:10px;left:0;right:0;text-align:center;opacity:.85">💡 Tipp: In der Mitte Play klicken – an den Seiten swipen</div>
+            <div id="swipeHint" class="tiny" style="position:absolute;bottom:10px;left:0;right:0;text-align:center;opacity:.85">↔️ Oben swipen • unten Leiste zum Play/Pause</div>
           </div>
         </div>`;
       cardEl = document.getElementById("swipeCard");
       // Gesten-Overlay-Container (Center bleibt klickbar fürs Iframe)
       gestureEl = document.createElement('div');
-      gestureEl.id = 'gestureLayer';
-      gestureEl.className = 'gesture-layer';
-      const leftGut = document.createElement('div');
-      leftGut.className = 'gesture-gutter left';
-      const rightGut = document.createElement('div');
-      rightGut.className = 'gesture-gutter right';
-      gestureEl.appendChild(leftGut);
-      gestureEl.appendChild(rightGut);
+      gestureEl.id = 'gestureTop';
+      gestureEl.className = 'gesture-top';
       cardEl.appendChild(gestureEl);
       badgeLike = document.getElementById("badgeLike");
       badgeNope = document.getElementById("badgeNope");
@@ -367,9 +359,8 @@
         IFrameAPI.createController(host, { uri: `spotify:track:${trackId}`, width: '100%', height: '100%' }, (controller) => {
           embedCtrl = controller;
           controller.addListener('ready', () => {
-            // sobald bereit: warten auf Play – wir versuchen einmalig Autoplay
-            setSwipeMode(false);
-            try { controller.togglePlay && controller.togglePlay(); } catch(e) { /* Autoplay kann vom Browser blockiert werden */ }
+            // Autoplay entfernt – warte auf Benutzeraktion
+            updatePlayBtn(false);
           });
           controller.addListener('playback_update', ({ data }) => {
             const playing = data?.isPaused === false;
@@ -390,11 +381,7 @@
         startX=x; startY=y; dx=0; dy=0; dragging=true; moved=false; interacting=false;
         cardEl.style.transition='none'; 
         clearTimeout(holdTimer);
-        holdTimer = setTimeout(()=>{ // Long-Press → kurz interagieren
-          interacting = true;
-          const frame = cardEl?.querySelector('iframe');
-          if(frame) frame.style.pointerEvents = 'auto';
-        }, 550);
+        holdTimer = setTimeout(()=>{ interacting = true; }, 550);
       };
       const move  = (x,y)=>{
         if(!dragging) return;
@@ -412,14 +399,7 @@
         if(!dragging) return;
         dragging=false;
         clearTimeout(holdTimer);
-        if (interacting) {
-          // Interaktion beendet → zurück zu Swipe (sofern erlaubt)
-          interacting = false;
-          const frame = cardEl?.querySelector('iframe');
-          if(frame && swipeEnabled) frame.style.pointerEvents = 'none';
-          setButtons(true);
-          return;
-        }
+        if (interacting) { interacting = false; return; }
         cardEl.style.transition='';
         const threshold = 90;
         if (dx > threshold) { animateDecision('right'); vote('like'); }
@@ -438,8 +418,7 @@
         el.addEventListener('touchend', end);
         el.addEventListener('mousedown', e=>{ start(e.clientX,e.clientY); });
       }
-      attachGestures(leftGut);
-      attachGestures(rightGut);
+      attachGestures(gestureEl);
       window.addEventListener('mousemove', e=>{ move(e.clientX,e.clientY); });
       window.addEventListener('mouseup', end);
       // Buttons nach dem Mount sicher aktivieren (auch wenn Musik pausiert)
@@ -492,18 +471,13 @@
       setTimeout(()=>{ renderCurrent(); }, 150);
       if (navigator.vibrate) { navigator.vibrate(10); }
     }
-    likeBtn.onclick = ()=>{ animateDecision('right'); vote('like'); };
-    nopeBtn.onclick = ()=>{ animateDecision('left');  vote('dislike'); };
-    skipBtn.onclick = ()=>{ index = Math.min(index + 1, songs.length); setDoc(progressRef(uid), { index, updatedAt: serverTimestamp() }, { merge:true }); renderCurrent(); };
-    undoBtn.onclick = async ()=>{
-      const last = history.pop(); if(!last) return;
-      index = Math.max(index - 1, 0);
-      await setDoc(progressRef(uid), { index, updatedAt: serverTimestamp() }, { merge: true });
-      renderCurrent();
-    };
+                /* Undo entfernt */
     window.addEventListener('keydown', e=>{
-      if(likeBtn.disabled) return;
-      if(e.key==='ArrowRight') likeBtn.click();
+      const k = (e.key||'').toLowerCase();
+      if(k==='arrowright'){ animateDecision('right'); vote('like'); }
+      if(k==='arrowleft'){  animateDecision('left');  vote('dislike'); }
+      if(k==='p'){ e.preventDefault(); document.getElementById('playBarBtn')?.click(); }
+    });
       if(e.key==='ArrowLeft')  nopeBtn.click();
       if(e.key===' ') { e.preventDefault(); skipBtn.click(); }
     });
