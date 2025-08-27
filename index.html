@@ -81,7 +81,7 @@
     import { getFirestore, doc, setDoc, onSnapshot, serverTimestamp }
       from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
-    // 🔑 Firebase Config (dein Projekt)
+    // 🔑 Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyCOYv05V2jXiDYPjc1MlT_WdpgLfW4aJJo",
       authDomain: "songmatch-850c7.firebaseapp.com",
@@ -107,9 +107,9 @@
     const plHint     = document.getElementById("plHint");
 
     // State
-    let songs = [];       // queue of track IDs
+    let songs = [];        // queue of track IDs
     let index = 0;
-    const likedSeeds = []; // last liked track IDs to improve recs
+    const likedSeeds = []; // recent liked tracks → to improve recs
 
     // UI helpers
     function setVotingEnabled(on) {
@@ -119,8 +119,8 @@
 
     async function showSong(i){
       if(i >= songs.length){
-        songArea.innerHTML = "<p>🎶 Lade neue Empfehlungen …</p>";
-        await topUpSongs();               // try to fetch more
+        songArea.innerHTML = "<p>🎶 Lade neue Songs …</p>";
+        await topUpSongs();               // fetch more
         if (i >= songs.length) {
           songArea.innerHTML = "<p>😕 Keine Songs gefunden. Bitte neu laden.</p>";
           return;
@@ -140,7 +140,6 @@
       await setDoc(ref, { [uid]: val, updatedAt: serverTimestamp() }, { merge: true });
       if (val === "like") {
         likedSeeds.push(id);
-        // nur die letzten 5 Likes als Seeds behalten
         if (likedSeeds.length > 5) likedSeeds.splice(0, likedSeeds.length - 5);
       }
       index++;
@@ -172,28 +171,24 @@
       });
     }
 
-    // 🔑 Spotify-Token über dein Vercel-Backend holen
+    // 🔑 Spotify-Token über dein Vercel-Backend holen (URL ggf. anpassen)
     async function getToken() {
       const res = await fetch("https://reasorr-github-io.vercel.app/api/token");
       const data = await res.json();
       return data.access_token;
     }
 
-    // 🎵 Empfehlungen holen (statt Playlists) – funktioniert mit Client Credentials
+    // ---- Spotify loaders ----
+
+    // A) Recommendations (kann bei neuen/dev Apps gelegentlich gesperrt sein → wir fangen das ab)
     async function fetchRecommendations(token, { seedGenres = [], seedTracks = [] } = {}) {
-      // Fallback-Genres (dürfen max. 5 Seeds insgesamt sein)
-      const genres = seedGenres.length ? seedGenres : ["pop","dance","rock","hip-hop","indie"];
-      const params = new URLSearchParams({
-        limit: "50",
-        market: "DE",
-        seed_genres: genres.slice(0,5).join(",")
-      });
+      const genres = seedGenres.length ? seedGenres : ["pop","dance","rock","indie"];
+      const params = new URLSearchParams({ limit: "50", market: "DE" });
+      if (genres.length) params.set("seed_genres", genres.slice(0,5).join(","));
       if (seedTracks.length) params.set("seed_tracks", seedTracks.slice(0,5).join(","));
 
       const url = `https://api.spotify.com/v1/recommendations?${params.toString()}`;
-      const res = await fetch(url, {
-        headers: { "Authorization": "Bearer " + token, "Accept": "application/json" }
-      });
+      const res = await fetch(url, { headers: { "Authorization": "Bearer " + token }});
       if (!res.ok) {
         console.warn("Recommendations HTTP", res.status);
         return [];
@@ -202,14 +197,39 @@
       return (data.tracks || []).map(t => t.id).filter(Boolean);
     }
 
-    // Queue auffüllen (dedupe + leicht mischen)
+    // B) Search fallback (funktioniert mit Client Credentials)
+    async function fetchBySearch(token) {
+      const headers = { "Authorization": "Bearer " + token };
+      const queries = [
+        'genre:pop year:2022-2025',
+        'genre:dance year:2022-2025',
+        'genre:rock year:2020-2025',
+        'genre:indie year:2020-2025',
+        'genre:hip-hop year:2020-2025'
+      ];
+      let ids = [];
+      for (const q of queries) {
+        const url = `https://api.spotify.com/v1/search?type=track&limit=50&market=DE&q=${encodeURIComponent(q)}`;
+        const res = await fetch(url, { headers });
+        if (!res.ok) { console.warn("Search HTTP", res.status, q); continue; }
+        const data = await res.json();
+        const chunk = (data.tracks?.items || []).map(t => t.id).filter(Boolean);
+        ids = ids.concat(chunk);
+      }
+      return ids;
+    }
+
+    // Queue auffüllen (dedupe + mischen), zuerst Recs, dann Search
     async function topUpSongs(){
       const token = await getToken();
-      const recs = await fetchRecommendations(token, { seedTracks: likedSeeds });
+      let pool = await fetchRecommendations(token, { seedTracks: likedSeeds });
+      if (pool.length === 0) {
+        pool = await fetchBySearch(token);
+      }
       const set = new Set(songs);
       const fresh = [];
-      for (const id of recs) if (!set.has(id)) { set.add(id); fresh.push(id); }
-      // leicht mischen
+      for (const id of pool) if (!set.has(id)) { set.add(id); fresh.push(id); }
+      // Shuffle
       for (let i = fresh.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [fresh[i], fresh[j]] = [fresh[j], fresh[i]];
@@ -222,7 +242,7 @@
 
     // Start
     (async () => {
-      await topUpSongs();   // initiale Empfehlungen
+      await topUpSongs();   // initiales Füllen
       index = 0;
       showSong(index);
     })();
