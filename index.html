@@ -3,28 +3,62 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SongMatch</title>
+  <title>SongMatch — Swipe</title>
   <style>
     :root { color-scheme: dark; }
-    body { font-family: system-ui, Arial, sans-serif; background:#0b0f14; color:#fff; margin:0; }
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, Arial, sans-serif; background:#0b0f14; color:#fff; margin:0; }
     .gate { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:#000; z-index:9999; }
-    .gate-card { background:#121822; padding:24px; border-radius:12px; text-align:center; width:min(400px, 92vw); }
-    .gate-card input, .gate-card button { padding:12px 14px; margin:6px 0; border-radius:8px; border:none; width:100%; box-sizing:border-box; }
-    .gate-card button { background:#7aa2ff; color:white; cursor:pointer; font-weight:600; }
+    .gate-card { background:#121822; padding:24px; border-radius:16px; text-align:center; width:min(420px,92vw); }
+    .gate-card input, .gate-card button { padding:12px 14px; margin:6px 0; border-radius:10px; border:none; width:100%; }
+    .gate-card button { background:#7aa2ff; color:white; font-weight:700; cursor:pointer; }
+
     html:not(.gate-ok) .app { display:none; }
     html.gate-ok .gate { display:none; }
 
-    .wrap { max-width:820px; margin:0 auto; padding:16px; }
-    .card { background:#121822; margin:20px 0; padding:20px; border-radius:12px; }
-    .center { text-align:center; }
+    .wrap { max-width:900px; margin:0 auto; padding:16px; }
+    .card { background:#121822; margin:16px 0; padding:16px; border-radius:14px; }
     .row { display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; }
-    button.vote { font-size:18px; padding:12px 22px; border:none; border-radius:10px; cursor:pointer; font-weight:700; }
-    .like { background:#2ecc71; }
-    .dislike { background:#e74c3c; }
-    .vote:disabled { opacity:.6; cursor:not-allowed; }
-    iframe { border:none; border-radius:10px; display:block; margin:0 auto; }
-    .playlist { display:grid; gap:10px; }
     .muted { opacity:.75; font-size:14px; }
+
+    /* Tinder-style swipe area */
+    .stage { position:relative; height:72vh; max-height:720px; overflow:hidden; border-radius:16px; background:#0f141d; }
+    .song-card {
+      position:absolute; inset:0; display:flex; align-items:flex-end; justify-content:stretch;
+      background:#111; border-radius:16px; overflow:hidden;
+      touch-action:none; user-select:none;
+      transform-origin: 50% 90%;
+      transition: box-shadow .2s ease;
+      will-change: transform, opacity;
+    }
+    .song-card img.bg {
+      position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:brightness(.6);
+    }
+    .gradient { position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0.1) 20%, rgba(0,0,0,0.85) 85%); }
+    .meta {
+      position:relative; width:100%; padding:18px;
+      display:flex; gap:12px; align-items:center;
+    }
+    .cover { width:72px; height:72px; border-radius:10px; flex:0 0 auto; object-fit:cover; }
+    .title { font-weight:800; font-size:18px; margin:0; }
+    .artist { margin:2px 0 0; opacity:.9; font-size:14px; }
+    .badges { position:absolute; top:14px; left:14px; display:flex; gap:8px; }
+    .badge { padding:6px 10px; border-radius:999px; font-weight:700; font-size:12px; }
+    .badge.like { background:#2ecc71; }
+    .badge.nope { background:#e74c3c; }
+    .controls { margin-top:10px; display:flex; gap:12px; justify-content:center; }
+    .btn { padding:12px 18px; border:none; border-radius:12px; font-weight:800; cursor:pointer; }
+    .btn.like { background:#2ecc71; }
+    .btn.nope { background:#e74c3c; }
+    .btn.start { background:#7aa2ff; }
+    iframe { border:none; border-radius:10px; display:block; margin:0; }
+    .playlist { display:grid; gap:10px; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); }
+    .hint { text-align:center; margin-top:6px; }
+
+    @media (max-width: 480px){
+      .stage{height:70vh;}
+      .cover{width:64px;height:64px;}
+    }
   </style>
 </head>
 <body>
@@ -41,26 +75,31 @@
   <!-- App -->
   <div class="app">
     <div class="wrap">
-      <div class="card center">
-        <h2>Nächster Song</h2>
-        <div id="songArea" class="muted">lädt Songs …</div>
-        <div class="row" style="margin-top:12px;">
-          <button id="likeBtn" class="vote like" disabled>❤️ Like</button>
-          <button id="dislikeBtn" class="vote dislike" disabled>✖️ Dislike</button>
+      <!-- Swipe Stage -->
+      <div class="card">
+        <div class="row">
+          <button id="audioBtn" class="btn start">▶️ Start (Audio freigeben)</button>
         </div>
+        <div class="stage" id="stage">
+          <!-- cards will be injected here -->
+        </div>
+        <div class="controls">
+          <button id="dislikeBtn" class="btn nope">✖️ Dislike</button>
+          <button id="likeBtn" class="btn like">❤️ Like</button>
+        </div>
+        <p class="hint muted">Tipp: Auf dem Handy einfach <b>rechts swipen = Like</b>, <b>links swipen = Dislike</b>.</p>
       </div>
 
+      <!-- Gemeinsame Playlist -->
       <div class="card">
         <h2>Gemeinsame Playlist</h2>
         <div id="playlist" class="playlist"></div>
-        <p id="plHint" class="muted" style="margin-top:6px;">
-          Hier erscheinen Songs automatisch, sobald ihr beide ❤️ geklickt habt.
-        </p>
+        <p id="plHint" class="muted">Hier erscheinen Songs automatisch, sobald ihr beide ❤️ geklickt habt.</p>
       </div>
     </div>
   </div>
 
-  <!-- Zugangscode Script -->
+  <!-- Zugangscode -->
   <script>
     (function(){
       const ACCESS_CODE = '1235';
@@ -74,15 +113,14 @@
     })();
   </script>
 
-  <!-- Firebase + Spotify Logik -->
+  <!-- Firebase + Spotify + Swipe logic -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-    import {
-      getFirestore, doc, setDoc, getDoc, onSnapshot, serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, onSnapshot, serverTimestamp }
+      from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
-    // 🔑 Firebase Config
+    // --- Firebase ---
     const firebaseConfig = {
       apiKey: "AIzaSyCOYv05V2jXiDYPjc1MlT_WdpgLfW4aJJo",
       authDomain: "songmatch-850c7.firebaseapp.com",
@@ -91,126 +129,217 @@
       messagingSenderId: "139459584433",
       appId: "1:139459584433:web:df99f2c2a15cd6eed41d90"
     };
-
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
     signInAnonymously(auth).catch(console.error);
-
     let uid = null;
-    auth.onAuthStateChanged(user => { if (user) uid = user.uid; });
+    auth.onAuthStateChanged(u => uid = u?.uid || null);
 
-    // DOM
-    const songArea   = document.getElementById("songArea");
-    const likeBtn    = document.getElementById("likeBtn");
-    const dislikeBtn = document.getElementById("dislikeBtn");
-    const playlistEl = document.getElementById("playlist");
-    const plHint     = document.getElementById("plHint");
+    // --- DOM / State ---
+    const stage = document.getElementById('stage');
+    const likeBtn = document.getElementById('likeBtn');
+    const dislikeBtn = document.getElementById('dislikeBtn');
+    const audioBtn = document.getElementById('audioBtn');
+    const playlistEl = document.getElementById('playlist');
+    const plHint = document.getElementById('plHint');
 
-    // State
-    let songs = [];  // gemeinsame Queue aus Firestore
-    let index = 0;   // persönlicher Fortschritt
+    let audioUnlocked = false;
+    const audio = new Audio();
+    audio.preload = 'auto';
+    audio.crossOrigin = 'anonymous'; // previews are hosted on p.scdn.co
 
-    // —— Spotify Token vom Backend ——
-    async function getToken() {
-      const res = await fetch("https://reasorr-github-io.vercel.app/api/token"); // ggf. URL anpassen
+    // Shared queue in Firestore: each item = {id, n:name, a:artist, p:preview_url, img:image}
+    const poolRef = doc(db, "config", "poolV2");
+
+    let tracks = []; // the shared list (same order for both)
+    let index = 0;   // personal progress
+
+    // --- Helper: render top card ---
+    function renderTopCard(){
+      stage.innerHTML = '';
+      if (!tracks.length) {
+        stage.innerHTML = `<div class="song-card" style="display:flex;align-items:center;justify-content:center;">
+          <div class="muted">🎶 Lade Songs …</div>
+        </div>`;
+        return;
+      }
+      const t = tracks[index] || tracks[tracks.length-1];
+      const card = document.createElement('div');
+      card.className = 'song-card';
+      card.innerHTML = `
+        <img class="bg" src="${t.img}" alt="">
+        <div class="gradient"></div>
+        <div class="badges" id="badges">
+          <!-- dynamic -->
+        </div>
+        <div class="meta">
+          <img class="cover" src="${t.img}" alt="">
+          <div>
+            <p class="title">${t.n}</p>
+            <p class="artist">${t.a}</p>
+          </div>
+        </div>
+      `;
+      stage.appendChild(card);
+      if (audioUnlocked && t.p) { audio.src = t.p; audio.play().catch(()=>{}); }
+      attachSwipe(card);
+    }
+
+    // --- Swipe handling ---
+    function attachSwipe(card){
+      let startX=0, startY=0, dx=0, dy=0, dragging=false;
+      const threshold = 90; // px
+      const badges = card.querySelector('#badges');
+
+      const onStart = (x,y)=>{ dragging=true; startX=x; startY=y; card.style.transition='none'; };
+      const onMove = (x,y)=>{
+        if(!dragging) return;
+        dx = x - startX; dy = y - startY;
+        const rot = dx/12;
+        card.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
+        card.style.opacity = String(1 - Math.min(Math.abs(dx)/260, .65));
+        badges.innerHTML = dx>25 ? `<span class="badge like">LIKE</span>` : (dx<-25 ? `<span class="badge nope">NOPE</span>` : '');
+      };
+      const onEnd = ()=>{
+        card.style.transition='transform .18s ease, opacity .18s ease';
+        if (dx > threshold) return animateOut(card, 'right', ()=> vote('like'));
+        if (dx < -threshold) return animateOut(card, 'left',  ()=> vote('dislike'));
+        // snap back
+        card.style.transform = ''; card.style.opacity='1'; badges.innerHTML='';
+        dragging=false; dx=dy=0;
+      };
+
+      // touch
+      card.addEventListener('touchstart', e=>{ const t=e.touches[0]; onStart(t.clientX,t.clientY); }, {passive:true});
+      card.addEventListener('touchmove',  e=>{ const t=e.touches[0]; onMove(t.clientX,t.clientY); }, {passive:true});
+      card.addEventListener('touchend',   onEnd);
+
+      // mouse (desktop)
+      card.addEventListener('mousedown', e=> onStart(e.clientX,e.clientY));
+      window.addEventListener('mousemove', e=> onMove(e.clientX,e.clientY));
+      window.addEventListener('mouseup', onEnd);
+    }
+
+    function animateOut(card, dir, done){
+      const x = (dir==='right') ? window.innerWidth : -window.innerWidth;
+      card.style.transform = `translate(${x}px, 0) rotate(${dir==='right'?12:-12}deg)`;
+      card.style.opacity = '0';
+      setTimeout(()=>{ done(); }, 160);
+    }
+
+    // --- Voting ---
+    async function vote(val){
+      if(!uid){ alert('Noch nicht verbunden, bitte kurz warten!'); return; }
+      const t = tracks[index];
+      if (!t) return;
+      const ref = doc(db, "votes", t.id);
+      await setDoc(ref, { [uid]: val, updatedAt: serverTimestamp() }, { merge: true });
+      index = Math.min(index+1, tracks.length);
+      renderTopCard();
+      // prefetch next preview
+      const next = tracks[index];
+      if (audioUnlocked && next?.p) { audio.src = next.p; audio.play().catch(()=>{}); }
+    }
+
+    likeBtn.onclick = ()=> animateOut(stage.querySelector('.song-card'),'right', ()=>vote('like'));
+    dislikeBtn.onclick = ()=> animateOut(stage.querySelector('.song-card'),'left', ()=>vote('dislike'));
+
+    // --- Audio unlock (required by mobile browsers) ---
+    audioBtn.onclick = async ()=>{
+      try{
+        audioUnlocked = true;
+        // tiny silent play to unlock; or play current
+        const t = tracks[index];
+        if (t?.p) { audio.src = t.p; await audio.play(); }
+        audioBtn.textContent = '✅ Audio aktiv';
+        audioBtn.disabled = true;
+      }catch(e){ console.log(e); alert('Konnte Audio nicht starten – nochmal tippen.'); }
+    };
+
+    // --- Shared pool: read & keep same order for both users ---
+    onSnapshot(poolRef, (snap)=>{
+      const data = snap.exists() ? snap.data() : null;
+      const list = data?.tracks || [];
+      if (list.length){
+        tracks = list;
+        if (index >= tracks.length) index = tracks.length-1;
+        setupPlaylistListener(list.map(t=>t.id)); // Ensure listeners
+        renderTopCard();
+      }
+    });
+
+    // Ensure pool exists and has enough items
+    async function ensurePool(min=150){
+      const snap = await getDoc(poolRef);
+      let list = snap.exists() ? (snap.data().tracks || []) : [];
+      if (list.length >= min) return;
+
+      const fresh = await buildBatch(); // new tracks with preview
+      // Append unique
+      const seen = new Set(list.map(t=>t.id));
+      for (const t of fresh) if (!seen.has(t.id)) { seen.add(t.id); list.push(t); }
+
+      await setDoc(poolRef, { tracks: list, updatedAt: serverTimestamp() }, { merge: true });
+    }
+
+    // --- Build a batch of tracks using SEARCH and keep only those with preview_url ---
+    async function buildBatch(){
+      const token = await getToken();
+      const queries = [
+        'pop year:2022-2025',
+        'hip hop year:2022-2025',
+        'dance year:2021-2025',
+        'rock year:2019-2025',
+        'indie year:2019-2025',
+        'house year:2020-2025',
+        'r&b year:2020-2025'
+      ];
+      let pool = [];
+      for (const q of queries) {
+        const offset = Math.floor(Math.random()*10)*50; // vary results
+        const url = `https://api.spotify.com/v1/search?type=track&limit=50&offset=${offset}&market=DE&q=${encodeURIComponent(q)}`;
+        const res = await fetch(url, { headers:{ "Authorization":"Bearer "+token } });
+        if (!res.ok) continue;
+        const data = await res.json();
+        const chunk = (data.tracks?.items || [])
+          .filter(t=> !!t.preview_url && t.album?.images?.[0]?.url) // want autoplay preview
+          .map(t=> ({
+            id: t.id,
+            n: t.name,
+            a: (t.artists||[]).map(x=>x.name).join(', '),
+            p: t.preview_url,
+            img: t.album.images[0].url
+          }));
+        pool = pool.concat(chunk);
+      }
+      // dedupe by id, keep order
+      const seen = new Set(); const out=[];
+      for (const t of pool) if (!seen.has(t.id)) { seen.add(t.id); out.push(t); }
+      // small shuffle to mix genres
+      for (let i=out.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [out[i],out[j]]=[out[j],out[i]]; }
+      return out.slice(0,200);
+    }
+
+    // --- Spotify token from your Vercel function ---
+    async function getToken(){
+      const res = await fetch("https://reasorr-github-io.vercel.app/api/token");
       const data = await res.json();
       return data.access_token;
     }
 
-    // —— SEARCH Loader (erlaubt mit Client-Credentials) ——
-    async function searchTracks(token, query, limit=50) {
-      const offset = Math.floor(Math.random() * 10) * 50; // 0..450
-      const url = `https://api.spotify.com/v1/search?type=track&limit=${limit}&offset=${offset}&market=DE&q=${encodeURIComponent(query)}`;
-      const res = await fetch(url, { headers: { "Authorization": "Bearer " + token } });
-      if (!res.ok) { console.warn("Search HTTP", res.status, query); return []; }
-      const data = await res.json();
-      return (data.tracks?.items || []).map(t => t.id).filter(Boolean);
-    }
-
-    async function buildBatch() {
-      const token = await getToken();
-      const queries = [
-        'pop year:2022-2025','hip hop year:2022-2025','dance year:2021-2025',
-        'rock year:2019-2025','indie year:2019-2025','house year:2020-2025','r&b year:2020-2025'
-      ];
-      let pool = [];
-      for (const q of queries) pool = pool.concat(await searchTracks(token, q, 50));
-      // dedupe, Reihenfolge beibehalten
-      const seen = new Set(); const out = [];
-      for (const id of pool) if (!seen.has(id)) { seen.add(id); out.push(id); }
-      return out;
-    }
-
-    // —— Gemeinsamer Pool in Firestore ——
-    const poolRef = doc(db, "config", "pool"); // { ids: string[] }
-
-    // Pool lesen + live aktualisieren
-    onSnapshot(poolRef, (snap) => {
-      const data = snap.exists() ? snap.data() : null;
-      const ids = data?.ids || [];
-      if (ids.length) {
-        songs = ids;                            // gleiche Reihenfolge für alle
-        if (index >= songs.length) index = songs.length - 1;
-        renderCurrent();
-      }
-    });
-
-    // Pool initial anlegen (falls leer) oder bei Bedarf auffüllen
-    async function ensurePoolHasEnough(minCount = 200) {
-      const snap = await getDoc(poolRef);
-      let ids = snap.exists() ? (snap.data().ids || []) : [];
-      if (ids.length >= minCount) return;
-
-      const batch = await buildBatch();
-      // an vorhandene Liste anhängen, Duplikate vermeiden
-      const set = new Set(ids);
-      for (const id of batch) if (!set.has(id)) { set.add(id); ids.push(id); }
-
-      await setDoc(poolRef, { ids, updatedAt: serverTimestamp() }, { merge: true });
-    }
-
-    // —— UI / Voting ——
-    function setVotingEnabled(on) { likeBtn.disabled = !on; dislikeBtn.disabled = !on; }
-
-    function renderCurrent(){
-      if (!songs.length) { songArea.innerHTML = "<p>🎶 Lade Songs …</p>"; return; }
-      const id = songs[index] || songs[songs.length-1];
-      songArea.innerHTML = `<iframe src="https://open.spotify.com/embed/track/${id}" width="320" height="380" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
-      setVotingEnabled(true);
-      // wenn wir ans Ende kommen, Pool aufstocken
-      const remaining = songs.length - index - 1;
-      if (remaining < 15) ensurePoolHasEnough(200);
-    }
-
-    async function vote(val){
-      if(!uid){ alert("Noch nicht verbunden, bitte kurz warten!"); return; }
-      setVotingEnabled(false);
-      const id = songs[index];
-      const ref = doc(db, "votes", id);
-      await setDoc(ref, { [uid]: val, updatedAt: serverTimestamp() }, { merge: true });
-      index = Math.min(index + 1, songs.length); // persönlicher Fortschritt
-      if (index >= songs.length) {
-        songArea.innerHTML = "<p>🎶 Ende der Liste – fülle auf …</p>";
-        await ensurePoolHasEnough(200);
-      }
-      renderCurrent();
-    }
-    likeBtn.onclick = () => vote("like");
-    dislikeBtn.onclick = () => vote("dislike");
-
-    // Gemeinsame Playlist-Listener
+    // --- Shared playlist: add embed when both liked ---
     function setupPlaylistListener(ids){
-      ids.forEach(id => {
+      ids.forEach(id=>{
         const ref = doc(db, "votes", id);
-        onSnapshot(ref, snap => {
+        onSnapshot(ref, snap=>{
           if(!snap.exists()) return;
           const data = snap.data();
           const vals = Object.values(data).filter(v => v==="like" || v==="dislike");
-          if(vals.length >= 2 && vals.every(v => v==="like")){
-            if(!document.getElementById("pl-"+id)){
+          if (vals.length >= 2 && vals.every(v => v==="like")){
+            if (!document.getElementById("pl-"+id)){
               const iframe = document.createElement("iframe");
-             iframe.id = "pl-" + id;
+              iframe.id = "pl-"+id;
               iframe.width = "100%";
               iframe.height = "80";
               iframe.src = `https://open.spotify.com/embed/track/${id}`;
@@ -222,15 +351,14 @@
       });
     }
 
-    // Start: Pool anlegen/auffüllen, dann UI rendern
-    (async () => {
-      await ensurePoolHasEnough(200);
+    // --- Boot ---
+    (async ()=>{
+      await ensurePool(150);         // make sure pool exists/has enough
       const snap = await getDoc(poolRef);
-      const ids = snap.exists() ? (snap.data().ids || []) : [];
-      songs = ids;
-      setupPlaylistListener(songs);
+      tracks = snap.exists() ? (snap.data().tracks || []) : [];
+      setupPlaylistListener(tracks.map(t=>t.id));
       index = 0;
-      renderCurrent();
+      renderTopCard();
     })();
   </script>
 </body>
