@@ -131,7 +131,8 @@
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
     import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, onSnapshot, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+
 
     // --- Firebase ---
     const firebaseConfig = {
@@ -145,6 +146,11 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db   = getFirestore(app);
+
+    // --- Client identity for multi-device sync ---
+    const CLIENT_ID_KEY='songmatch:cid';
+    let clientId = localStorage.getItem(CLIENT_ID_KEY);
+    if(!clientId){ clientId = Math.random().toString(36).slice(2)+Date.now().toString(36); localStorage.setItem(CLIENT_ID_KEY, clientId); }
 
     // --- DOM refs ---
     const authTitle = document.getElementById('authTitle');
@@ -219,6 +225,15 @@
       await reloadSongsFromPool();
       setupPlaylistListenersFor(songs);
       renderCurrent();
+
+      // Listen to remote progress changes (sync across devices)
+      onSnapshot(progressRef(uid), (snap)=>{
+        if(!snap.exists()) return;
+        const d = snap.data() || {};
+        if(d.by === clientId) return; // ignore our own writes
+        const newIndex = typeof d.index === 'number' ? d.index : 0;
+        if(newIndex !== index){ index = newIndex; renderCurrent(); }
+      });
     });
 
     // Live-Updates des Pools
@@ -388,6 +403,19 @@
       if(!uid || index >= songs.length) return;
       const id = songs[index];
       history.push({ id, val });
+      await setDoc(doc(db, "votes", id), { [uid]: val, updatedAt: serverTimestamp() }, { merge: true });
+      // Atomically advance index and mark author device
+      await runTransaction(db, async (tx)=>{
+        const ref = progressRef(uid);
+        const snap = await tx.get(ref);
+        const cur = snap.exists() ? (snap.data().index || 0) : 0;
+        tx.set(ref, { index: cur + 1, by: clientId, updatedAt: serverTimestamp() }, { merge: true });
+      });
+      // Optimistic UI
+      index = Math.min(index + 1, songs.length);
+      setTimeout(()=>{ renderCurrent(); }, 150);
+      if (navigator.vibrate) { navigator.vibrate(10); }
+    });
       await setDoc(doc(db, "votes", id), { [uid]: val, updatedAt: serverTimestamp() }, { merge: true });
       index = Math.min(index + 1, songs.length);
       await setDoc(progressRef(uid), { index, updatedAt: serverTimestamp() }, { merge: true });
