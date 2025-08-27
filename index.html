@@ -135,34 +135,34 @@
     }
 
     // Spotify Integration
-   async function getToken() {
-  const res = await fetch("https://reasorr-github-io.vercel.app/api/token");
-  const data = await res.json();
-  return data.access_token;
+  async function loadSongs() {
+  const token = await getToken();
+  console.log("Spotify Token:", token);
+
+  const playlists = [
+    "37i9dQZEVXbMDoHDwVN2tF", // Top 50 Global
+    "37i9dQZEVXbLiRSasKsNU9"  // Viral 50 Global
+  ];
+
+  let allSongs = [];
+
+  for (const pid of playlists) {
+    const res = await fetch(`https://api.spotify.com/v1/playlists/${pid}/tracks`, {
+      headers: { "Authorization": "Bearer " + token }
+    });
+    const data = await res.json();
+    console.log("Playlist data:", pid, data);
+
+    if (data.items) {
+      const ids = data.items.map(item => item.track.id);
+      allSongs = allSongs.concat(ids);
+    }
+  }
+
+  console.log("Geladene Songs:", allSongs);
+  return allSongs;
 }
 
-
-    async function loadSongs() {
-      const token = await getToken();
-
-      const playlists = [
-        "37i9dQZEVXbMDoHDwVN2tF", // Top 50 Global
-        "37i9dQZEVXbLiRSasKsNU9"  // Viral 50 Global
-      ];
-
-      let allSongs = [];
-
-      for (const pid of playlists) {
-        const res = await fetch(`https://api.spotify.com/v1/playlists/${pid}/tracks`, {
-          headers: { "Authorization": "Bearer " + token }
-        });
-        const data = await res.json();
-        const ids = data.items.map(item => item.track.id);
-        allSongs = allSongs.concat(ids);
-      }
-
-      return allSongs;
-    }
 
     // Start
     loadSongs().then(list => {
