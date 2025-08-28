@@ -56,7 +56,7 @@
     .playbar-btn { width:min(360px,92vw); border-radius:999px; padding:14px 16px; background:#1f2a3a; color:#fff; border:none; font-weight:700; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.25); }
     .playbar-btn:active { transform: translateY(1px); }
 
-    /* Progress bar (optional, feels good) */
+    /* Progress bar */
     .topprog{position:sticky;top:0;height:3px;background:#1f2a3a}
     .topprog>i{display:block;height:100%;background:#7aa2ff;width:0%}
 
@@ -105,10 +105,10 @@
       <div class="panel">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
           <h2 style="margin:0">Nächster Song</h2>
-          <div class="tiny" id="progressInfo">–</div>
+          <div class="tiny" id="progressInfo">-</div>
         </div>
 
-        <div id="songArea" class="muted" style="min-height:420px">lädt Songs …</div>
+        <div id="songArea" class="muted" style="min-height:420px">lädt Songs ...</div>
 
         <!-- Abgerundete Play/Pause-Bar -->
         <div class="playbar"><button id="playBarBtn" class="playbar-btn" title="Play/Pause">▶️ Tippen zum Abspielen</button></div>
@@ -141,7 +141,7 @@
 
   <!-- App logic -->
   <script type="module">
-    // Show runtime errors on auth screen (so login never "silently dies")
+    // Show runtime errors on auth screen
     window.addEventListener('error', e => { const el=document.getElementById('authMsg'); if(el) el.textContent = 'JavaScript error: ' + (e?.message||'unknown'); });
     window.addEventListener('unhandledrejection', e => { const el=document.getElementById('authMsg'); if(el) el.textContent = 'Runtime error: ' + (e?.reason?.message||e?.reason||'unknown'); });
 
@@ -275,52 +275,155 @@
       const data = await res.json();
       return data.access_token;
     }
+
     async function findPlaylistId(token, fallbackId, fallbackName = 'Top 50 - Global'){
-      // try known ID first
       if (fallbackId){
         const r = await fetch(`https://api.spotify.com/v1/playlists/${fallbackId}`, { headers: { Authorization:'Bearer '+token } });
         if (r.ok) return fallbackId;
       }
-      // fallback: search by name (type=playlist)
       const s = await fetch(`https://api.spotify.com/v1/search?type=playlist&limit=1&q=${encodeURIComponent(fallbackName)}`, { headers: { Authorization:'Bearer '+token } });
       if (!s.ok) return null;
       const j = await s.json();
       return j?.playlists?.items?.[0]?.id || null;
     }
+
     async function getPlaylistTrackIds(token, playlistId, market='DE', limit=100){
-      // We just need first 100 from Top 50; paging omitted for simplicity
       const url = `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=${Math.min(limit,100)}&market=${market}&fields=items(track(id))`;
       const r = await fetch(url, { headers: { Authorization:'Bearer '+token } });
       if (!r.ok) return [];
       const j = await r.json();
       return (j.items || []).map(it => it?.track?.id).filter(Boolean);
     }
-    async function filterByPopularity(token, ids, minPop=85){
-      const keep = [];
+
+    async function fetchTracks(token, ids){
+      const out = [];
       for (let i=0; i<ids.length; i+=50){
         const slice = ids.slice(i,i+50);
         const r = await fetch(`https://api.spotify.com/v1/tracks?ids=${slice.join(',')}`, { headers: { Authorization:'Bearer '+token } });
         if (!r.ok) continue;
         const j = await r.json();
-        for (const t of (j.tracks||[])){
-          if (t && typeof t.popularity === 'number' && t.popularity >= minPop) keep.push(t.id);
-        }
+        out.push(...(j.tracks||[]).filter(Boolean));
       }
-      return keep;
+      return out;
     }
 
-    // Build pool strictly from global hits (Top 50 Global), filtered by popularity
+    async function fetchArtists(token, artistIds){
+      const out = [];
+      for (let i=0; i<artistIds.length; i+=50){
+        const slice = artistIds.slice(i,i+50);
+        const r = await fetch(`https://api.spotify.com/v1/artists?ids=${slice.join(',')}`, { headers: { Authorization:'Bearer '+token } });
+        if (!r.ok) continue;
+        const j = await r.json();
+        out.push(...(j.artists||[]).filter(Boolean));
+      }
+      return out;
+    }
+
+    // Language heuristic: keep if text is mostly Latin letters incl. German umlauts and common symbols
+    function looksMostlyGermanOrEnglish(text){
+      const ref = (text||'').normalize('NFKD');
+      const allowed = /[a-zA-Z0-9 äöüÄÖÜß'".,!?()\-:&/]/g;
+      const letters = ref.replace(/\s+/g,'').length;
+      const ok = (ref.match(allowed)||[]).length;
+      if (letters === 0) return true;
+      return ok / letters >= 0.7;
+    }
+
+    // Genre-based filter toward "Assi"-Rap vibes
+    const ALLOW_GENRE_KEYWORDS = [
+      'deutschrap','german hip hop','german drill','german trap','german cloud rap','german grime','boombap','boom bap',
+      'gangster rap','street rap','drill','trap','hip hop','rap','underground rap'
+    ];
+    const STRONG_ASSI_KEYWORDS = [
+      'gangster rap','street rap','drill','german drill','german trap','deutschrap'
+    ];
+    // Block obvious non DE/EN locales
+    const BLOCKED_LOCALE_HINTS = [
+      'turkish','türk','french','francophone','spanish','latino','latin rap','italian','russian','ukrainian','arab','maghreb',
+      'polish','dutch','swedish','norwegian','danish','finnish','portuguese','brazil','japanese','korean','thai','indonesian','vietnamese','chinese'
+    ];
+
+    function scoreGenres(genres){
+      const g = (genres||[]).map(x=>String(x||'').toLowerCase());
+      const hasAllowed = g.some(gg => ALLOW_GENRE_KEYWORDS.some(k => gg.includes(k)));
+      const hasBlocked = g.some(gg => BLOCKED_LOCALE_HINTS.some(k => gg.includes(k)));
+      let assiScore = 0;
+      for (const gg of g){ for (const k of STRONG_ASSI_KEYWORDS){ if (gg.includes(k)) assiScore += 1; } }
+      return { hasAllowed, hasBlocked, assiScore };
+    }
+
+    async function filterAssiRapDeEn(token, ids){
+      const tracks = await fetchTracks(token, ids);
+      const artistIdSet = new Set();
+      for (const t of tracks){ for (const a of (t?.artists||[])){ if(a?.id) artistIdSet.add(a.id); } }
+      const artists = await fetchArtists(token, Array.from(artistIdSet));
+      const artistMap = new Map(artists.map(a => [a.id, a]));
+
+      const kept = [];
+      for (const t of tracks){
+        if (!t || !t.id) continue;
+        const artObjs = (t.artists||[]).map(a => artistMap.get(a.id)).filter(Boolean);
+        const allGenres = artObjs.flatMap(a => a.genres || []);
+        const { hasAllowed, hasBlocked, assiScore } = scoreGenres(allGenres);
+
+        // Names heuristic to catch non Latin scripts
+        const textBlob = [t.name, ...artObjs.map(a=>a.name)].join(' ');
+        const langOk = looksMostlyGermanOrEnglish(textBlob);
+
+        if (hasAllowed && !hasBlocked && langOk){
+          kept.push({ id: t.id, score: assiScore });
+        }
+      }
+      // Sort by "assi-ness" score desc, then keep unique
+      kept.sort((a,b)=> (b.score - a.score));
+      const out = [];
+      const seen = new Set();
+      for (const k of kept){
+        if (!seen.has(k.id)){ seen.add(k.id); out.push(k.id); }
+      }
+      return out;
+    }
+
+    // Build pool from Deutschrap-/Assi-Playlists und Filter
     async function buildBatch(){
       const token = await getToken();
-      const TOP50_GLOBAL_ID = '37i9dQZEVXbMDoHDwVN2tF'; // Top 50 - Global (stable at time of writing)
-      const pid = await findPlaylistId(token, TOP50_GLOBAL_ID, 'Top 50 - Global');
-      if (!pid) return [];
-      let ids = await getPlaylistTrackIds(token, pid, 'DE', 100);  // ensure playable in DE
-      ids = await filterByPopularity(token, ids, 85);              // only real hits
-      // dedup
-      const seen = new Set(); const out = [];
-      for (const id of ids) if (id && !seen.has(id)) { seen.add(id); out.push(id); }
-      return out;
+
+      // Seed-Playlists nach Namen suchen. Reihenfolge priorisiert härtere Vibes.
+      const SEED_PLAYLIST_NAMES = [
+        'Deutschrap Untergrund',
+        'Harte Rap Bars',
+        'German Drill',
+        'Drill Deutschrap',
+        'Modus Mio',
+        'Deutschrap Brandneu'
+      ];
+
+      const collected = [];
+      for (const name of SEED_PLAYLIST_NAMES){
+        const pid = await findPlaylistId(token, null, name);
+        if (!pid) continue;
+        const ids = await getPlaylistTrackIds(token, pid, 'DE', 100);
+        collected.push(...ids);
+      }
+
+      // Dedup der Roh-IDs
+      const baseIds = Array.from(new Set(collected));
+
+      // Assi-Rap + Sprache-Filter anwenden
+      const filtered = await filterAssiRapDeEn(token, baseIds);
+
+      // Falls zu wenig, fallback auf Top 50 Deutschland als Zusatzquelle
+      if (filtered.length < 60){
+        const top50De = await findPlaylistId(token, null, 'Top 50 - Deutschland');
+        if (top50De){
+          const extra = await getPlaylistTrackIds(token, top50De, 'DE', 100);
+          const extraFiltered = await filterAssiRapDeEn(token, Array.from(new Set(extra)));
+          for (const id of extraFiltered){ if (!filtered.includes(id)) filtered.push(id); }
+        }
+      }
+
+      // Zur Sicherheit auf sinnvolle Menge begrenzen
+      return filtered.slice(0, 200);
     }
 
     async function ensurePoolHasEnough(minCount=100){
@@ -330,8 +433,9 @@
       const batch = await buildBatch();
       const setIds = new Set(ids);
       for (const id of batch) if (!setIds.has(id)) { setIds.add(id); ids.push(id); }
-      await setDoc(poolRef, { ids, updatedAt: serverTimestamp() }, { merge: true });
+      await setDoc(poolRef, { ids, updatedAt: serverTimestamp(), source: 'assi-de-en' }, { merge: true });
     }
+
     async function reloadSongsFromPool(){
       const snap = await getDoc(poolRef);
       songs = snap.exists() ? (snap.data().ids || []) : [];
@@ -341,12 +445,12 @@
     let spotifyApiReady = new Promise(resolve => { window.onSpotifyIframeApiReady = resolve; });
     let embedCtrl = null;
 
-    // Swipe (always enabled in top zone)
+    // Swipe
     let cardEl=null, badgeLike=null, badgeNope=null, gestureEl=null;
     let startX=0, startY=0, dx=0, dy=0, dragging=false;
 
     function mountSwipeCard(trackId){
-      if (!trackId) { songArea.textContent = "🎶 Lade Songs …"; return; }
+      if (!trackId) { songArea.textContent = "🎶 Lade Songs ..."; return; }
       songArea.innerHTML = `
         <div class="swipe-wrap">
           <div class="swipe-card" id="swipeCard">
@@ -416,7 +520,7 @@
     // Render current
     async function renderCurrent(){
       if (!songs.length){
-        songArea.textContent = "🎶 Lade Songs …";
+        songArea.textContent = "🎶 Lade Songs ...";
         await ensurePoolHasEnough(100);
         await reloadSongsFromPool();
       }
@@ -431,7 +535,7 @@
       updateProgressInfo();
     }
     function updateProgressInfo(){
-      progressInfo.textContent = songs.length ? `Song ${Math.min(index+1,songs.length)} / ${songs.length}` : '–';
+      progressInfo.textContent = songs.length ? `Song ${Math.min(index+1,songs.length)} / ${songs.length}` : '-';
       const p = songs.length ? ((Math.min(index+1,songs.length)/songs.length)*100) : 0;
       if(topProg) topProg.style.width = p + '%';
     }
